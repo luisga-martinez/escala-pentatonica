@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pentatónica Menor — Luisga Martínez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:#ffffff;
+  color:#111;
+  font-family:'Barlow',sans-serif;
+  font-weight:400;
+  line-height:1.65;
+}
+
+/* ─── HEADER ─────────────────────────── */
+header{
+  background:#fff;
+  border-bottom:1px solid #ece9e3;
+  padding:3rem 2rem 2.5rem;
+  text-align:center;
+}
+.brand{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:800;
+  letter-spacing:.25em;text-transform:uppercase;
+  color:#c8c3bb;margin-bottom:1.1rem;
+}
+.brand span{color:#c49a28}
+h1{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(3rem,7vw,5.5rem);
+  font-weight:900;text-transform:uppercase;
+  letter-spacing:.01em;line-height:.95;
+  margin-bottom:.5rem;
+}
+h1 .acc{color:#c49a28}
+.subtitle{
+  font-size:14px;font-weight:400;
+  color:#b0ab9f;margin-bottom:2rem;
+  letter-spacing:.03em;
+}
+
+/* Notes pill */
+.npill{
+  display:inline-flex;
+  border:1px solid #e5e0d8;
+  border-radius:50px;overflow:hidden;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:.04em;
+}
+.npill span{padding:7px 16px;border-right:1px solid #e5e0d8;color:#777}
+.npill span:last-child{border-right:none}
+.npill .fd{color:#c49a28}
+
+/* Key selector */
+.ks-row{
+  display:flex;align-items:flex-start;gap:10px;
+  justify-content:center;flex-wrap:wrap;
+  margin-top:1.75rem;
+}
+.ks-lbl{
+  font-size:10px;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:#c8c3bb;padding-top:8px;
+}
+.kbtns{display:flex;flex-wrap:nowrap;gap:4px;justify-content:center;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.kbtn{
+  background:transparent;
+  border:1px solid #e0dbd4;
+  border-radius:7px;color:#aaa;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:700;
+  letter-spacing:.04em;
+  padding:5px 8px;
+  cursor:pointer;
+  transition:border-color .15s,color .15s,background .15s;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  line-height:1.25;white-space:nowrap;flex-shrink:0;
+}
+.kbtn:hover{border-color:#aaa;color:#333}
+.kbtn.on{background:#111;color:#fff;border-color:#111}
+.kbtn .enh{font-size:13px;font-weight:700;letter-spacing:.04em;opacity:1}
+.kbtn.on .enh{opacity:1}
+
+/* ─── MAIN ───────────────────────────── */
+main{max-width:1080px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
+
+/* Position buttons */
+.pbtns{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:1rem}
+.pbtn{
+  background:transparent;border:1px solid #e0dbd4;
+  border-radius:7px;color:#aaa;
+  font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;
+  padding:6px 17px;cursor:pointer;transition:all .15s;
+}
+.pbtn:hover{border-color:#bbb;color:#333}
+.pbtn.on{background:#f8f4ef;font-weight:600}
+
+
+
+/* Fretboard */
+.fbwrap{
+  background:#f7f3ec;border:1px solid #e7e2da;
+  border-radius:14px;padding:1.25rem 1rem .8rem;
+  margin-bottom:.5rem;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.fbwrap svg{display:block;height:auto}
+.scroll-hint{display:none;font-size:11px;color:#c8c3bb;text-align:center;margin-bottom:.75rem;letter-spacing:.07em}
+@media(max-width:1040px){.scroll-hint{display:block}}
+
+/* Legend */
+.legend{
+  display:flex;gap:20px;font-size:12px;color:#bbb;
+  align-items:center;flex-wrap:wrap;margin-bottom:2.5rem;
+}
+.legend-item{display:flex;align-items:center;gap:7px}
+.ldot{width:11px;height:11px;border-radius:50%;flex-shrink:0;transition:background .25s}
+
+/* Info grid */
+.igrid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:1px;background:#e9e5de;border:1px solid #e9e5de;
+  border-radius:10px;overflow:hidden;margin-bottom:1.5rem;
+}
+.icard{background:#fff;padding:1.1rem 1.5rem}
+.icard .lbl{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#c8c3bb;margin-bottom:.3rem}
+.icard .val{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:#222;letter-spacing:.03em}
+
+/* Tip */
+.tip{
+  background:#fffdf5;border:1px solid #edead0;
+  border-left:3px solid #c49a28;border-radius:0 9px 9px 0;
+  padding:1rem 1.4rem;font-size:13px;color:#aaa;
+  line-height:1.85;margin-bottom:2.5rem;
+}
+.tip strong{color:#666;font-weight:600}
+
+/* Ref list */
+.slbl{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#c8c3bb;margin-bottom:.8rem}
+.rlist{display:flex;flex-direction:column;gap:6px;margin-bottom:3rem}
+.ritem{
+  display:flex;align-items:center;gap:14px;
+  background:#fff;border:1px solid #eee;
+  border-radius:9px;padding:.7rem 1.3rem;
+  font-size:13px;cursor:pointer;transition:all .15s;
+}
+.ritem:hover{background:#faf6f1;border-color:#ddd}
+.rdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.rname{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:#222;letter-spacing:.03em}
+.rrange{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:#bbb}
+
+/* ─── DONATE SECTION ─────────────────── */
+.donate-section{
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+  padding:2rem 1.5rem;margin-top:.5rem;
+  background:#fffdf5;border:1px solid #edead0;
+  border-left:3px solid #c49a28;border-radius:0 12px 12px 0;
+  text-align:center;
+}
+.donate-msg{font-size:14px;color:#aaa;line-height:1.6;max-width:420px}
+.donate-msg strong{color:#666;font-weight:600}
+
+/* ─── FOOTER ─────────────────────────── */
+footer{
+  background:#fff;border-top:1px solid #f0ebe4;
+  padding:2rem 1.5rem;text-align:center;
+}
+.footer-inner{
+  max-width:600px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+}
+.footer-brand{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:#c8c3bb;
+}
+.footer-brand span{color:#c49a28}
+.footer-heart{font-size:12px;color:#c8c3bb;letter-spacing:.04em}
+.footer-heart strong{font-weight:600;color:#aaa}
+.socials{display:flex;gap:12px;align-items:center}
+.socials a{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;
+  border:1px solid #e8e3dc;border-radius:8px;
+  color:#bbb;text-decoration:none;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.socials a:hover{border-color:#c49a28;color:#c49a28;background:#fffdf5}
+.socials svg{width:15px;height:15px;fill:currentColor}
+.donate-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px !important;
+  border-color:#e0dbd4 !important;
+  font-family:'Barlow',sans-serif;
+  font-size:12px;font-weight:600;
+  color:#aaa;
+  border-radius:8px;
+  white-space:nowrap;
+}
+.donate-btn:hover{
+  border-color:#c49a28 !important;
+  color:#c49a28 !important;
+  background:#fffdf5 !important;
+}
+
+.mode-row{
+  display:inline-flex;
+  background:#f4f1ec;
+  border:1px solid #e0dbd4;
+  border-radius:12px;
+  padding:5px;
+  gap:5px;
+  margin-bottom:2rem;
+}
+.mbtn{
+  background:transparent;
+  border:none;
+  border-radius:8px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:18px;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:#bbb;
+  padding:11px 36px;
+  cursor:pointer;
+  transition:background .2s,color .2s,box-shadow .2s;
+}
+.mbtn.on{
+  background:#111;
+  color:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.mbtn:not(.on):hover{color:#555;background:#ece7de}
+
+
+/* ─── OVERLAY BUTTONS ────────────────── */
+.orow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.85rem}
+.obtn{
+  background:transparent;
+  border:1px solid #e0dbd4;
+  border-radius:7px;
+  color:#aaa;
+  font-family:'Barlow',sans-serif;
+  font-size:12px;font-weight:600;
+  padding:5px 14px;
+  cursor:pointer;
+  letter-spacing:.02em;
+  transition:all .15s;
+}
+.obtn:hover{border-color:#bbb;color:#444}
+.obtn.on{background:#111;color:#fff;border-color:#111}
+.obtn .obadge{
+  display:inline-block;
+  width:16px;height:16px;
+  background:#e7e2da;
+  border-radius:50%;
+  font-size:9px;font-weight:800;
+  line-height:16px;text-align:center;
+  margin-right:4px;
+  vertical-align:middle;
+  color:#555;
+}
+.obtn.on .obadge{background:rgba(255,255,255,.2);color:#fff}
+/* ─── AUDIO BUTTON ───────────────────── */
+.audio-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:1.25rem}
+.audio-row #pdesc{font-size:14px;color:#aaa;line-height:1.75;flex:1;min-height:44px;margin-bottom:0}
+.play-btn{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;
+  border:1px solid #e0dbd4;
+  border-radius:8px;
+  color:#aaa;
+  font-family:'Barlow',sans-serif;
+  font-size:12px;font-weight:500;
+  padding:7px 13px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .2s;
+  flex-shrink:0;
+  margin-top:2px;
+}
+.play-btn:hover{border-color:#bbb;color:#555}
+.play-btn.playing{color:#fff;background:var(--pc,#1D9E75);border-color:var(--pc,#1D9E75)}
+.play-btn svg{width:12px;height:12px;fill:currentColor}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+
+<header>
+  <p class="brand">Luisga <span>Martínez</span></p>
+  <h1>Escala <span class="acc">Pentatónica</span></h1>
+  <p class="subtitle">5 notas &nbsp;·&nbsp; 5 posiciones en el mástil</p>
+  <div class="mode-row" id="mode-row">
+    <button class="mbtn on" id="mbtn-minor" onclick="selMode('minor')">Menor</button>
+    <button class="mbtn" id="mbtn-major" onclick="selMode('major')">Mayor</button>
+  </div>
+  <div class="ks-row">
+    <span class="ks-lbl">Tonalidad</span>
+    <div class="kbtns" id="kbtns"></div>
+  </div>
+  <div id="npill" class="npill" style="margin-top:1.5rem"></div>
+</header>
+
+<main>
+  <div class="pbtns" id="pbtns"></div>
+  <div class="audio-row">
+    <p id="pdesc"></p>
+    <button class="play-btn" id="play-btn" onclick="togglePlay()">
+      <svg id="play-icon" viewBox="0 0 16 16"><polygon points="3,1 14,8 3,15"/></svg>
+      <span id="play-label">Escuchar</span>
+    </button>
+  </div>
+
+  <div class="orow">
+    <button class="obtn" id="obtn-notes"     onclick="selOverlay('notes')"    ><span class="obadge">A</span>Notas</button>
+    <button class="obtn" id="obtn-intervals" onclick="selOverlay('intervals')"><span class="obadge">♭3</span>Intervalos</button>
+    <button class="obtn" id="obtn-fingering" onclick="selOverlay('fingering')"><span class="obadge">1</span>Digitación</button>
+  </div>
+  <div class="fbwrap">
+    <svg id="fb" viewBox="0 0 975 210" style="min-width:975px"></svg>
+  </div>
+  <p class="scroll-hint">← desliza para ver el diapasón completo →</p>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="ldot" id="ldot-scale" style="background:#1D9E75"></div>
+      Nota de la escala
+    </div>
+    <div class="legend-item">
+      <div class="ldot" style="background:#c49a28"></div>
+      Fundamental
+    </div>
+  </div>
+
+  <div class="igrid">
+    <div class="icard"><div class="lbl">Fórmula</div><div class="val" id="info-formula">1 · ♭3 · 4 · 5 · ♭7</div></div>
+    <div class="icard"><div class="lbl">Notas</div><div class="val" id="info-notes"></div></div>
+    <div class="icard"><div class="lbl">Posiciones</div><div class="val">5 posiciones</div></div>
+  </div>
+
+  <div class="tip">
+    <strong>Consejo:</strong> Empieza por la posición 1 y memoriza el patrón hasta que salga solo.
+    Las posiciones adyacentes comparten notas en sus extremos, lo que facilita conectarlas.
+    Dominar las 5 posiciones te da libertad total para improvisar en cualquier zona del mástil.
+  </div>
+
+  <p class="slbl">Resumen de posiciones</p>
+  <div class="rlist" id="rlist"></div>
+
+  <!-- Donate section -->
+  <div class="donate-section">
+    <p class="donate-msg">¿Te ha servido esta herramienta?<br>Puedes apoyar este proyecto con una donación.</p>
+    <div id="donate-button-main"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="socials">
+      <!-- Instagram -->
+      <a href="https://www.instagram.com/lgabrielmartinez/" target="_blank" rel="noopener" title="Instagram">
+        <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <!-- Facebook -->
+      <a href="https://www.facebook.com/lhuyz12/" target="_blank" rel="noopener" title="Facebook">
+        <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </a>
+      <!-- TikTok -->
+      <a href="https://www.tiktok.com/@luisga_martinez" target="_blank" rel="noopener" title="TikTok">
+        <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+      </a>
+      <!-- YouTube -->
+      <a href="https://youtube.com/@luisgamartinez" target="_blank" rel="noopener" title="YouTube">
+        <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+    </div>
+    <p class="footer-heart">Hecho con ♥ por <strong>Luisga Martínez</strong></p>
+    <p class="footer-brand">Luisga <span>Martínez</span> &nbsp;·&nbsp; Herramienta para alumnos</p>
+  </div>
+</footer>
+
+<script>
+// Strings top → bottom: e(0) B(1) G(2) D(3) A(4) E(5)
+const SNAMES = ['e','B','G','D','A','E'];
+const SY     = [30, 56, 82, 108, 134, 160];
+const STH    = [.65, .95, 1.3, 1.7, 2.1, 2.6];
+
+const LW = 70, FW = 40, FRETS = 22;
+const nx = f => f === 0 ? LW - 28 : LW + (f - .5) * FW;
+const fx = f => LW + f * FW;
+
+const NOTES = ['E','F','F#','G','G#','A','Bb','B','C','C#','D','Eb'];
+
+// Enharmonic aliases for minor keys
+const ENH = {
+  'F#m':'/ Gbm', 'G#m':'/ Abm', 'Bbm':'/ A#m',
+  'C#m':'/ Dbm', 'Ebm':'/ D#m'
+};
+
+// Minor pentatonic keys (same as before)
+const MINOR_KEYS = [
+  {n:'Em', f:0}, {n:'Fm',  f:1}, {n:'F#m', f:2}, {n:'Gm',  f:3},
+  {n:'G#m',f:4}, {n:'Am',  f:5}, {n:'Bbm', f:6}, {n:'Bm',  f:7},
+  {n:'Cm', f:8}, {n:'C#m', f:9}, {n:'Dm',  f:10},{n:'Ebm', f:11}
+];
+
+// Major pentatonic keys — user-requested order, fret = position of root on low-E string
+// G=3, G#/Ab=4, A=5, A#/Bb=6, B=7, C=8, C#/Db=9, D=10, D#/Eb=11, E=0, F=1, F#/Gb=2
+const MAJOR_KEYS = [
+  {n:'G',      f:3,  enh:''},
+  {n:'G#',     f:4,  enh:'/ Ab'},
+  {n:'A',      f:5,  enh:''},
+  {n:'A#',     f:6,  enh:'/ Bb'},
+  {n:'B',      f:7,  enh:''},
+  {n:'C',      f:8,  enh:''},
+  {n:'C#',     f:9,  enh:'/ Db'},
+  {n:'D',      f:10, enh:''},
+  {n:'D#',     f:11, enh:'/ Eb'},
+  {n:'E',      f:0,  enh:''},
+  {n:'F',      f:1,  enh:''},
+  {n:'F#',     f:2,  enh:'/ Gb'},
+];
+
+// NOTES chromatic from E (index = semitones above open E string)
+// Used for pitch-class matching: (OPEN_MIDI[5] + f) % 12
+// E=4, F=5, F#=6, G=7, G#=8, A=9, Bb=10, B=11, C=0, C#=1, D=2, Eb=3  (standard pitch classes)
+// We'll compute rootPC dynamically.
+
+let curMode = 'minor'; // 'minor' | 'major'
+let curOverlay = null; // null | 'notes' | 'intervals' | 'fingering'
+
+// Interval semitone → label
+const IMAP_MINOR = {0:'R', 3:'b3', 5:'4', 7:'5', 10:'b7'};
+const IMAP_MAJOR = {0:'R', 2:'2', 4:'3', 7:'5', 9:'6'};
+
+// Fingering per position (0-indexed), per string (0=e thin, 5=E thick)
+// [finger for 1st note in str, finger for 2nd note in str]
+const FING = [
+  // Pos 1
+  { 5:[1,4], 4:[1,3], 3:[1,3], 2:[1,3], 1:[1,4], 0:[1,4] },
+  // Pos 2
+  { 5:[1,3], 4:[1,4], 3:[1,4], 2:[1,3], 1:[1,3], 0:[1,3] },
+  // Pos 3
+  { 5:[1,3], 4:[1,3], 3:[1,3], 2:[1,4], 1:[1,4], 0:[1,3] },
+  // Pos 4
+  { 5:[1,4], 4:[1,4], 3:[1,3], 2:[1,3], 1:[2,4], 0:[1,4] },
+  // Pos 5
+  { 5:[1,3], 4:[1,3], 3:[1,4], 2:[1,4], 1:[1,3], 0:[1,3] },
+];
+
+function selOverlay(name) {
+  curOverlay = (curOverlay === name) ? null : name;
+  // Update overlay button states
+  ['notes','intervals','fingering'].forEach(n => {
+    const b = document.getElementById('obtn-' + n);
+    if (b) b.className = 'obtn' + (curOverlay === n ? ' on' : '');
+  });
+  draw();
+}
+
+function getOverlayLabel(midi, s, posIdx, noteIdxInStr) {
+  if (!curOverlay) return null;
+  if (curOverlay === 'notes') {
+    // NOTES is E-based (index 0 = E, open 6th string = MIDI 40)
+    // so we subtract 40 to align pitch class with the array
+    return NOTES[(midi - 40 + 120) % 12];
+  }
+  if (curOverlay === 'intervals') {
+    const rpc = rootPC();
+    const diff = (midi % 12 - rpc + 12) % 12;
+    const imap = curMode === 'minor' ? IMAP_MINOR : IMAP_MAJOR;
+    return imap[diff] ?? null;
+  }
+  if (curOverlay === 'fingering') {
+    if (posIdx < 0 || posIdx >= FING.length) return null;
+    const strFing = FING[posIdx][s];
+    if (!strFing) return null;
+    return String(strFing[noteIdxInStr] ?? '');
+  }
+  return null;
+}
+
+// KEYS alias — resolved per mode at runtime
+const KEYS = MINOR_KEYS; // kept for legacy refs; use activeKeys() instead
+
+const BASE = [
+  { id:1, col:'#1D9E75',
+    notes:[[5,5],[5,8],[4,5],[4,7],[3,5],[3,7],[2,5],[2,7],[1,5],[1,8],[0,5],[0,8]],
+    roots:[[5,5],[3,7],[0,5]] },
+  { id:2, col:'#378ADD',
+    notes:[[5,8],[5,10],[4,7],[4,10],[3,7],[3,10],[2,7],[2,9],[1,8],[1,10],[0,8],[0,10]],
+    roots:[[3,7],[1,10]] },
+  { id:3, col:'#D85A30',
+    notes:[[5,10],[5,12],[4,10],[4,12],[3,10],[3,12],[2,9],[2,12],[1,10],[1,13],[0,10],[0,12]],
+    roots:[[4,12],[1,10]] },
+  { id:4, col:'#D4537E',
+    notes:[[5,12],[5,15],[4,12],[4,15],[3,12],[3,14],[2,12],[2,14],[1,13],[1,15],[0,12],[0,15]],
+    roots:[[4,12],[2,14]] },
+  { id:5, col:'#7F77DD',
+    notes:[[5,15],[5,17],[4,15],[4,17],[3,14],[3,17],[2,14],[2,17],[1,15],[1,17],[0,15],[0,17]],
+    roots:[[5,17],[2,14],[0,17]] }
+];
+
+const DESC = [
+  'El patrón más utilizado, anclado a la fundamental. La fundamental aparece en cuerdas 6, 4 y 1 formando un triángulo — úsalo como brújula siempre que te pierdas.',
+  'Empieza en el ♭3 de la escala. Comparte las notas altas de la pos. 1: practica deslizando de pos. 1 a pos. 2 para aprender a conectarlas sin saltos.',
+  'Empieza en el 4º grado. La fundamental no está en la cuerda 6, búscala en cuerdas 5 y 2. Practica combinando pos. 2 y 3: sube en una posición y baja en la siguiente — así desarrollas fluidez en el mástil.',
+  'Empieza en el 5º grado. Esta posición recuerda un poco a la 1era, por lo que es fácil confundirlas. La pos. 4 es muy utilizada en el blues y en el rock.',
+  'Empieza en el ♭7. Cierra el ciclo: sus notas altas enlazan de vuelta con la pos. 1 una octava arriba. La fundamental aparece en cuerdas 6, 3 y 1 — igual que pos. 1, pero desplazada.'
+];
+
+let curPos = 1, curKey = 5;
+let curMajorKey = 5; // default C major (index 5 in MAJOR_KEYS)
+let curMinorKey = 5; // default Am  (index 5 in MINOR_KEYS)
+
+function activeKeys() { return curMode === 'minor' ? MINOR_KEYS : MAJOR_KEYS; }
+
+// Root pitch class (0-11, where C=0, C#=1, D=2 … B=11)
+// Open low E string = MIDI 40. Pitch class = (40 + fretOffset) % 12
+function rootPC() {
+  const f = activeKeys()[curKey].f;
+  return (40 + f) % 12;
+}
+
+// Pattern offset: how many frets to shift the base Am patterns
+// Minor: shift so minor root lands at curKey.f
+// Major: shift so relative minor root (majorRoot - 3 semitones) lands correctly
+function patternOff() {
+  if (curMode === 'minor') return activeKeys()[curKey].f - 5;
+  // For major, relative minor root = majorRoot - 3; base patterns rooted at fret 5
+  let majorF = MAJOR_KEYS[curKey].f;
+  let relMinorF = majorF - 3;
+  if (relMinorF < 0) relMinorF += 12;
+  return relMinorF - 5;
+}
+
+// Scale note names for info panel
+function scaleNoteNames() {
+  const f = activeKeys()[curKey].f;
+  const intervals = curMode === 'minor' ? [0,3,5,7,10] : [0,2,4,7,9];
+  return intervals.map(i => NOTES[(f+i)%12]).join(' · ');
+}
+
+function shiftPos(p, off) {
+  return {
+    ...p,
+    notes: p.notes.map(([s,f]) => [s, f+off]).filter(([,f]) => f >= 0 && f <= FRETS),
+    roots: p.roots.map(([s,f]) => [s, f+off]).filter(([,f]) => f >= 0 && f <= FRETS)
+  };
+}
+function fretRange(notes) {
+  const ff = notes.map(([,f]) => f);
+  return { min: Math.min(...ff), max: Math.max(...ff) };
+}
+function scaleNotes(rf) {
+  return [0,3,5,7,10].map(i => NOTES[(rf+i)%12]).join(' · ');
+}
+
+// Current dot color for "Nota de la escala" legend
+function scaleDotColor() {
+  if (curPos === 0) return '#1D9E75'; // default green when all
+  return BASE[curPos-1].col;
+}
+
+function draw() {
+  const off = patternOff();
+  let h = '';
+
+  const bgX = LW - 38, bgW = fx(FRETS) - bgX + 14;
+  const bgY = SY[0] - 11, bgH = SY[5] - SY[0] + 22;
+  h += `<rect x="${bgX}" y="${bgY}" width="${bgW}" height="${bgH}" rx="6" fill="#ede8df"/>`;
+
+  for (let f = 0; f <= FRETS; f++) {
+    const x = fx(f), isNut = f === 0;
+    h += `<line x1="${x}" y1="${bgY}" x2="${x}" y2="${bgY+bgH}"
+      stroke="${isNut?'#444':'#c0b8aa'}" stroke-width="${isNut?4.5:1}" stroke-linecap="round"/>`;
+  }
+
+  const iY = (SY[2] + SY[3]) / 2;
+  [3,5,7,9,15,17,19,21].forEach(f => {
+    h += `<circle cx="${LW+(f-.5)*FW}" cy="${iY}" r="4" fill="#d5cdc0"/>`;
+  });
+  const c12 = LW + (12-.5)*FW;
+  h += `<circle cx="${c12}" cy="${iY - 10}" r="4" fill="#d5cdc0"/>`;
+  h += `<circle cx="${c12}" cy="${iY + 10}" r="4" fill="#d5cdc0"/>`;
+
+  SNAMES.forEach((_,i) => {
+    h += `<line x1="${bgX+5}" y1="${SY[i]}" x2="${fx(FRETS)}" y2="${SY[i]}"
+      stroke="#6b6050" stroke-width="${STH[i]}" opacity=".55"/>`;
+  });
+  SNAMES.forEach((s,i) => {
+    h += `<text x="${bgX-7}" y="${SY[i]}" text-anchor="end" dominant-baseline="central"
+      font-size="12" font-family="'Barlow Condensed',sans-serif" font-weight="800" fill="#999">${s}</text>`;
+  });
+  [1,3,5,7,9,12,15,17,19,21,22].forEach(f => {
+    h += `<text x="${LW+(f-.5)*FW}" y="${SY[5]+24}" text-anchor="middle"
+      font-size="10" font-family="'Barlow Condensed',sans-serif" font-weight="600" fill="#c0b8aa">${f}</text>`;
+  });
+
+  const barY = SY[5] + 12;
+  if (curPos === 0) {
+    BASE.forEach(p => {
+      const t = shiftPos(p, off);
+      if (!t.notes.length) return;
+      const {min,max} = fretRange(t.notes);
+      h += `<rect x="${nx(min)-12}" y="${barY}" width="${nx(max)-nx(min)+24}" height="3" rx="1.5" fill="${p.col}" opacity=".5"/>`;
+    });
+  } else {
+    const p = BASE[curPos-1], t = shiftPos(p, off);
+    if (t.notes.length) {
+      const {min,max} = fretRange(t.notes);
+      h += `<rect x="${nx(min)-12}" y="${barY}" width="${nx(max)-nx(min)+24}" height="3" rx="1.5" fill="${p.col}" opacity=".72"/>`;
+    }
+  }
+
+  // Build per-position string→sorted-frets index for fingering lookup
+  const strNoteOrder = BASE.map(p => {
+    const byStr = {};
+    p.notes.forEach(([s, f]) => {
+      if (!byStr[s]) byStr[s] = [];
+      byStr[s].push(f);
+    });
+    Object.values(byStr).forEach(arr => arr.sort((a,b)=>a-b));
+    return byStr;
+  });
+
+  const rpc = rootPC();
+  const slotMap = new Map();
+
+  BASE.forEach((p, pi) => {
+    const t = shiftPos(p, off);
+    const on = curPos === 0 || curPos === p.id;
+
+    // Build shifted string→sorted-frets for this position
+    const shiftedByStr = {};
+    t.notes.forEach(([s, f]) => {
+      if (!shiftedByStr[s]) shiftedByStr[s] = [];
+      shiftedByStr[s].push(f);
+    });
+    Object.values(shiftedByStr).forEach(arr => arr.sort((a,b)=>a-b));
+
+    t.notes.forEach(([s, f]) => {
+      const key = s + ',' + f;
+      const midi = getMidi(s, f);
+      const isRoot = midi % 12 === rpc;
+      const noteIdxInStr = (shiftedByStr[s] || []).indexOf(f);
+
+      if (!slotMap.has(key)) {
+        slotMap.set(key, { x:nx(f), y:SY[s], fill: isRoot?'#c49a28':p.col,
+                           midi, isRoot, on, op: on?1:.05, pi, s, noteIdxInStr });
+      } else {
+        const existing = slotMap.get(key);
+        if (on && !existing.on) {
+          slotMap.set(key, { ...existing, fill: isRoot?'#c49a28':p.col,
+                             on:true, op:1, isRoot, pi, s, noteIdxInStr });
+        }
+      }
+    });
+  });
+
+  slotMap.forEach(({ x, y, fill, midi, isRoot, on, op, pi, s, noteIdxInStr }) => {
+    const hov = on ? `onmouseenter="hoverNote(${midi})" ontouchstart="hoverNote(${midi})" style="cursor:pointer"` : '';
+    h += `<circle cx="${x}" cy="${y}" r="12" fill="${fill}" opacity="${op}" ${hov}/>`;
+
+    if (on && curOverlay) {
+      const label = getOverlayLabel(midi, s, pi, noteIdxInStr);
+      if (label) {
+        const fs = label.length > 2 ? 6.5 : (label.length === 2 ? 7.5 : 8.5);
+        h += `<text cx="${x}" cy="${y}" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
+          font-size="${fs}" font-family="'Barlow Condensed',sans-serif" font-weight="800"
+          fill="rgba(255,255,255,.95)" pointer-events="none" letter-spacing="0">${label}</text>`;
+      }
+    } else if (isRoot && on) {
+      h += `<circle cx="${x}" cy="${y}" r="4.5" fill="rgba(255,255,255,.42)" opacity="1" pointer-events="none"/>`;
+    }
+  });
+
+  document.getElementById('fb').innerHTML = h;
+}
+
+function renderUI() {
+  const key = activeKeys()[curKey];
+  const off = patternOff();
+  const intervals = curMode === 'minor' ? [0,3,5,7,10] : [0,2,4,7,9];
+
+  // Notes pill
+  document.getElementById('npill').innerHTML =
+    intervals.map(i => `<span class="${i===0?'fd':''}">${NOTES[(key.f+i)%12]}</span>`).join('');
+
+  // Info notes + formula
+  document.getElementById('info-notes').textContent = scaleNoteNames();
+  document.getElementById('info-formula').textContent =
+    curMode === 'minor' ? '1 · ♭3 · 4 · 5 · ♭7' : '1 · 2 · 3 · 5 · 6';
+
+  // Mode buttons
+  document.getElementById('mbtn-minor').className = 'mbtn' + (curMode==='minor'?' on':'');
+  document.getElementById('mbtn-major').className = 'mbtn' + (curMode==='major'?' on':'');
+
+  // Key buttons
+  const keys = activeKeys();
+  document.getElementById('kbtns').innerHTML = keys.map((k,i) => {
+    const enh = curMode === 'minor' ? (ENH[k.n] || '') : (k.enh || '');
+    return `<button class="kbtn${i===curKey?' on':''}" onclick="selKey(${i})">
+      ${k.n}${enh ? `<span class="enh">${enh}</span>` : ''}
+    </button>`;
+  }).join('');
+
+  // Position buttons
+  document.getElementById('pbtns').innerHTML =
+    [{id:0,col:'#aaa'}, ...BASE].map(p => {
+      const a = curPos === p.id;
+      return `<button class="pbtn${a?' on':''}" onclick="selPos(${p.id})"${
+        a ? ` style="border-color:${p.col};color:${p.col}"` : ''
+      }>${p.id===0 ? 'Todas' : 'Pos. '+p.id}</button>`;
+    }).join('');
+
+  // Description — fret range only, no text description
+  if (curPos === 0) {
+    document.getElementById('pdesc').textContent = '';
+  } else {
+    const t = shiftPos(BASE[curPos-1], off);
+    const r = t.notes.length ? fretRange(t.notes) : null;
+    document.getElementById('pdesc').textContent = r ? `Traste ${r.min}–${r.max}` : '';
+  }
+
+  // Legend dot
+  document.getElementById('ldot-scale').style.background = scaleDotColor();
+
+  // Ref list
+  document.getElementById('rlist').innerHTML = BASE.map(p => {
+    const t = shiftPos(p, off);
+    const r = t.notes.length ? fretRange(t.notes) : null;
+    const rstr = r ? `Traste ${r.min}–${r.max}` : 'Fuera de rango';
+    return `<div class="ritem" onclick="selPos(${p.id})"${
+      curPos===p.id ? ` style="border-color:${p.col}55"` : ''
+    }>
+      <div class="rdot" style="background:${p.col}"></div>
+      <span class="rname">Posición ${p.id}</span>
+      <span class="rrange">${rstr}</span>
+    </div>`;
+  }).join('');
+
+  draw();
+}
+
+
+// ─── AUDIO ENGINE — Tone.js Sampler (acoustic guitar) ─────────────
+// MIDI note numbers for open strings (index 0=e high … 5=E low)
+const OPEN_MIDI = [64, 59, 55, 50, 45, 40];
+
+function getMidi(str, fret) { return OPEN_MIDI[str] + fret; }
+
+// Convert MIDI number to Tone.js note name (e.g. 69 → "A4")
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function midiToNote(m) { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
+
+// 90 BPM quarter note = 667 ms
+const STEP_SEC = 60 / 90;
+
+let sampler = null;
+let samplerReady = false;
+let isPlaying = false;
+let playPart = null;
+
+const GUITAR_BASE = 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_steel-mp3/';
+const GUITAR_URLS = {'E2':'E2.mp3','A2':'A2.mp3','D3':'D3.mp3','G3':'G3.mp3','B3':'B3.mp3','E4':'E4.mp3'};
+
+function initSampler() {
+  if (sampler) return;
+  sampler = new Tone.Sampler({
+    urls: GUITAR_URLS,
+    baseUrl: GUITAR_BASE,
+    onload: () => {
+      samplerReady = true;
+      // Remove loading indicator if still visible
+      const lbl = document.getElementById('play-label');
+      if (lbl && lbl.textContent === 'Cargando…') lbl.textContent = 'Escuchar';
+    },
+    release: 1.2,
+  }).toDestination();
+}
+
+// Auto-init sampler on first user interaction anywhere on the page
+let autoInitDone = false;
+async function autoInitAudio() {
+  if (autoInitDone) return;
+  autoInitDone = true;
+  await Tone.start();
+  initSampler();
+}
+document.addEventListener('click',    autoInitAudio, { once: false, passive: true });
+document.addEventListener('touchstart', autoInitAudio, { once: false, passive: true });
+document.addEventListener('mousemove', autoInitAudio, { once: true,  passive: true });
+
+function stopPlay() {
+  if (playPart) { playPart.dispose(); playPart = null; }
+  Tone.getTransport().stop();
+  Tone.getTransport().cancel();
+  isPlaying = false;
+  updatePlayBtn();
+}
+
+// Hover note preview — plays instantly if sampler already loaded
+function hoverNote(midi) {
+  if (samplerReady && sampler) {
+    sampler.triggerAttackRelease(midiToNote(midi), '8n', Tone.now(), 0.68);
+  }
+}
+
+function updatePlayBtn() {
+  const btn = document.getElementById('play-btn');
+  const icon = document.getElementById('play-icon');
+  const lbl = document.getElementById('play-label');
+  const col = curPos > 0 ? BASE[curPos-1].col : '#1D9E75';
+  btn.style.setProperty('--pc', col);
+  if (isPlaying) {
+    btn.classList.add('playing');
+    icon.innerHTML = '<rect x="2" y="1" width="4" height="14"/><rect x="10" y="1" width="4" height="14"/>';
+    lbl.textContent = 'Detener';
+  } else {
+    btn.classList.remove('playing');
+    icon.innerHTML = '<polygon points="3,1 14,8 3,15"/>';
+    lbl.textContent = 'Escuchar';
+  }
+}
+
+async function togglePlay() {
+  if (isPlaying) { stopPlay(); return; }
+
+  // Init sampler on first interaction
+  await Tone.start();
+  initSampler();
+
+  // Init if somehow not yet done (fallback)
+  if (!sampler) initSampler();
+  if (!samplerReady) {
+    const lbl = document.getElementById('play-label');
+    lbl.textContent = 'Cargando…';
+    await new Promise(res => {
+      const check = setInterval(() => { if (samplerReady) { clearInterval(check); res(); } }, 100);
+    });
+    document.getElementById('play-label').textContent = 'Escuchar';
+  }
+
+  const off = KEYS[curKey].f - 5;
+  let posNotes;
+
+  if (curPos === 0) {
+    const seen = new Set();
+    posNotes = [];
+    BASE.forEach(p => {
+      shiftPos(p, off).notes.forEach(([s,f]) => {
+        const k = s+','+f;
+        if (!seen.has(k)) { seen.add(k); posNotes.push([s,f]); }
+      });
+    });
+  } else {
+    posNotes = shiftPos(BASE[curPos-1], off).notes;
+  }
+
+  // Sort low → high by MIDI pitch
+  posNotes = posNotes.slice().sort((a,b) => getMidi(a[0],a[1]) - getMidi(b[0],b[1]));
+  // Remove true pitch duplicates
+  posNotes = posNotes.filter((n,i) => {
+    if (i === 0) return true;
+    return getMidi(n[0],n[1]) !== getMidi(posNotes[i-1][0], posNotes[i-1][1]);
+  });
+
+  isPlaying = true;
+  updatePlayBtn();
+
+  // Build a Tone.js Part (sequence of timed events)
+  Tone.getTransport().bpm.value = 90;
+  Tone.getTransport().cancel();
+
+  const events = posNotes.map(([s,f], i) => [i * STEP_SEC, midiToNote(getMidi(s,f))]);
+  const totalDur = posNotes.length * STEP_SEC + 1.5;
+
+  playPart = new Tone.Part((time, note) => {
+    sampler.triggerAttackRelease(note, '4n', time, 0.75);
+  }, events);
+
+  playPart.start(0);
+  Tone.getTransport().start();
+
+  // Auto-stop
+  Tone.getTransport().scheduleOnce(() => {
+    Tone.getTransport().stop();
+    isPlaying = false;
+    updatePlayBtn();
+  }, totalDur);
+}
+
+window.selPos  = id   => { curPos = id; stopPlay(); renderUI(); };
+window.selKey  = i    => { curKey = i; renderUI(); };
+window.selMode = mode => {
+  if (curMode === mode) return;
+  curMode = mode;
+  // Preserve relative key on switch: minor Am (f=5) ↔ major C (f=8, which is Am+3)
+  // Map by keeping same curKey index — same index, different array
+  renderUI();
+};
+renderUI();
+</script>
+<!-- PayPal Donate SDK -->
+<script>
+(function() {
+  var PAYPAL_BTN_CONFIG = {
+    env: 'production',
+    hosted_button_id: 'KSRA7KKHXHBWC',
+    image: {
+      src: 'https://www.paypalobjects.com/es_ES/ES/i/btn/btn_donateCC_LG.gif',
+      alt: 'Botón Donar con PayPal',
+      title: 'PayPal - The safer, easier way to pay online!',
+    }
+  };
+
+  var FALLBACK_HTML = '<a href="https://www.paypal.com/donate/?hosted_button_id=H848QZNPBMNJA" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #e0dbd4;border-radius:8px;padding:7px 14px;font-family:Barlow,sans-serif;font-size:12px;font-weight:600;color:#aaa;text-decoration:none" onmouseover="this.style.borderColor=\'#c49a28\';this.style.color=\'#c49a28\'" onmouseout="this.style.borderColor=\'#e0dbd4\';this.style.color=\'#aaa\'"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>Donar</a>';
+
+  // Set fallback immediately
+  ['donate-button-main'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = FALLBACK_HTML;
+  });
+
+  // Load SDK and replace with official button
+  var sdk = document.createElement('script');
+  sdk.src = 'https://www.paypalobjects.com/donate/sdk/donate-sdk.js';
+  sdk.charset = 'UTF-8';
+  sdk.onload = function() {
+    try {
+      ['donate-button-main'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = '';
+          PayPal.Donation.Button(PAYPAL_BTN_CONFIG).render('#' + id);
+        }
+      });
+    } catch(e) { /* fallback stays */ }
+  };
+  document.body.appendChild(sdk);
+})();
+</script>
+</body>
+</html>
