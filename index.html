@@ -313,7 +313,6 @@ footer{
 .play-btn.playing{color:#fff;background:var(--pc,#1D9E75);border-color:var(--pc,#1D9E75)}
 .play-btn svg{width:12px;height:12px;fill:currentColor}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
 
@@ -692,7 +691,7 @@ function draw() {
   });
 
   slotMap.forEach(({ x, y, fill, midi, isRoot, on, op, pi, s, noteIdxInStr }) => {
-    const hov = on ? `onmouseenter="hoverNote(${midi})" ontouchstart="hoverNote(${midi})" style="cursor:pointer"` : '';
+    const hov = on ? `onmouseenter="hoverNote(${midi})" style="cursor:pointer"` : '';
     h += `<circle cx="${x}" cy="${y}" r="12" fill="${fill}" opacity="${op}" ${hov}/>`;
 
     if (on && curOverlay) {
@@ -709,6 +708,13 @@ function draw() {
   });
 
   document.getElementById('fb').innerHTML = h;
+
+  // Store active slots for mobile touch detection
+  _activeSlots = [];
+  slotMap.forEach(({ x, y, midi, on }) => {
+    if (on) _activeSlots.push({ x, y, midi });
+  });
+  attachSvgTouchHandler();
 }
 
 function renderUI() {
@@ -777,46 +783,68 @@ function renderUI() {
 }
 
 
-// ─── AUDIO ENGINE (reescrito) ──────────────────────────────────────
-const OPEN_MIDI  = [64, 59, 55, 50, 45, 40]; // e B G D A E
+// ─── AUDIO ENGINE — Karplus-Strong synthesis (no deps, works on mobile) ────
+//
+// Open string frequencies (index 0=e thin … 5=E thick)
+const OPEN_MIDI  = [64, 59, 55, 50, 45, 40];
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const STEP_SEC   = 60 / 90; // 90 BPM
+const STEP_MS    = Math.round(60000 / 90); // 90 BPM → 667 ms
 
 function getMidi(str, fret)  { return OPEN_MIDI[str] + fret; }
+function midiToHz(midi)      { return 440 * Math.pow(2, (midi - 69) / 12); }
 function midiToNote(m)       { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
 
-let sampler      = null;
-let samplerReady = false;
-let isPlaying    = false;
-let playTimers   = [];
-
-const GUITAR_BASE = 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_steel-mp3/';
-const GUITAR_URLS = {'E2':'E2.mp3','A2':'A2.mp3','D3':'D3.mp3','G3':'G3.mp3','B3':'B3.mp3','E4':'E4.mp3'};
-
-function initSampler() {
-  if (sampler) return;
-  sampler = new Tone.Sampler({
-    urls: GUITAR_URLS,
-    baseUrl: GUITAR_BASE,
-    onload: () => { samplerReady = true; },
-    release: 1.2,
-  }).toDestination();
+// ── AudioContext singleton ───────────────────────────────────────────
+let _ctx = null;
+function getCtx() {
+  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  return _ctx;
+}
+// Resume must be called synchronously inside a user gesture
+function resumeCtx() {
+  const ctx = getCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
 }
 
-// ── Unlock AudioContext + load sampler on first gesture ─────────────
-// Tone.start() MUST be called synchronously inside the event handler on iOS
-let audioUnlocked = false;
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  Tone.start();   // sync call — no await — works on iOS/Android
-  initSampler();
-}
-document.addEventListener('click',     unlockAudio, { passive: true });
-document.addEventListener('touchstart', unlockAudio, { passive: true });
-document.addEventListener('mousemove', unlockAudio, { once: true, passive: true });
+// ── Karplus-Strong pluck synthesis ───────────────────────────────────
+function pluck(ctx, freq, startTime, vol) {
+  vol = vol || 0.72;
+  const sr  = ctx.sampleRate;
+  const N   = Math.max(2, Math.round(sr / freq));
+  const dur = 2.2; // seconds of decay
+  const len = Math.ceil(dur * sr);
 
-// ── Stop playback ────────────────────────────────────────────────────
+  // Buffer with noise seed + Karplus-Strong recurrence
+  const buf  = ctx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < N; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+  for (let i = N; i < len; i++) {
+    data[i] = 0.498 * (data[i - N] + data[i - (N - 1 < 1 ? 1 : N - 1)]);
+  }
+
+  const src  = ctx.createBufferSource();
+  src.buffer = buf;
+
+  // Low-pass for warmth
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 3800;
+
+  // Gain envelope
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+
+  src.connect(lp); lp.connect(gain); gain.connect(ctx.destination);
+  src.start(startTime);
+  src.stop(startTime + dur);
+}
+
+// ── Playback state ───────────────────────────────────────────────────
+let isPlaying  = false;
+let playTimers = [];
+
 function stopPlay() {
   playTimers.forEach(clearTimeout);
   playTimers = [];
@@ -824,20 +852,44 @@ function stopPlay() {
   updatePlayBtn();
 }
 
-// ── Hover preview — debounced, suppressed during playback ────────────
-let hoverTimer = null;
+// ── Hover note (debounced, suppressed during playback) ───────────────
+let _lastHoverMidi = -1;
+let _hoverTimer    = null;
 function hoverNote(midi) {
-  if (isPlaying) return;           // don't interrupt sequence playback
-  if (!audioUnlocked) unlockAudio();
-  if (!samplerReady || !sampler) return;
-  clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => {
-    try { sampler.triggerAttackRelease(midiToNote(midi), '8n', Tone.now(), 0.65); }
-    catch(e) {}
-  }, 20); // 20ms debounce prevents rapid firing as cursor crosses dots
+  if (isPlaying) return;
+  if (midi === _lastHoverMidi) return;    // same note, skip
+  _lastHoverMidi = midi;
+  clearTimeout(_hoverTimer);
+  _hoverTimer = setTimeout(() => {
+    const ctx = resumeCtx();              // sync resume — works on mobile
+    pluck(ctx, midiToHz(midi), ctx.currentTime, 0.65);
+  }, 25);
 }
 
-// ── Update play button UI ────────────────────────────────────────────
+// ── Touch handler on SVG (mobile hover equivalent) ───────────────────
+// We add a touchmove listener to the SVG so dragging finger plays notes
+let _activeSlots = []; // populated after each draw()
+
+function onSvgTouch(e) {
+  e.preventDefault();
+  const svg    = document.getElementById('fb');
+  const rect   = svg.getBoundingClientRect();
+  const vbW    = 975, vbH = 210;
+  const scaleX = vbW / rect.width;
+  const scaleY = vbH / rect.height;
+  const touch  = e.touches[0];
+  const px     = (touch.clientX - rect.left) * scaleX;
+  const py     = (touch.clientY - rect.top)  * scaleY;
+
+  let best = null, bestD = 999;
+  _activeSlots.forEach(slot => {
+    const d = Math.hypot(slot.x - px, slot.y - py);
+    if (d < bestD) { bestD = d; best = slot; }
+  });
+  if (best && bestD < 18) hoverNote(best.midi);
+}
+
+// ── Play button UI ───────────────────────────────────────────────────
 function updatePlayBtn() {
   const btn  = document.getElementById('play-btn');
   const icon = document.getElementById('play-icon');
@@ -857,28 +909,10 @@ function updatePlayBtn() {
 }
 
 // ── Play sequence ────────────────────────────────────────────────────
-async function togglePlay() {
+function togglePlay() {
+  // resumeCtx() MUST be the very first thing — iOS requires sync call
+  const ctx = resumeCtx();
   if (isPlaying) { stopPlay(); return; }
-
-  // Unlock audio context first (sync call for mobile compatibility)
-  unlockAudio();
-  // Then await Tone.start() to ensure context is running
-  await Tone.start();
-
-  if (!sampler) initSampler();
-
-  // Wait for samples (max 8s)
-  if (!samplerReady) {
-    document.getElementById('play-label').textContent = 'Cargando…';
-    await new Promise(res => {
-      const t = setInterval(() => { if (samplerReady) { clearInterval(t); res(); } }, 100);
-      setTimeout(() => { clearInterval(t); res(); }, 8000);
-    });
-    if (!samplerReady) {
-      document.getElementById('play-label').textContent = 'Escuchar';
-      return; // timeout — can't play
-    }
-  }
 
   const off = patternOff();
   let posNotes;
@@ -887,7 +921,7 @@ async function togglePlay() {
     posNotes = [];
     BASE.forEach(p => {
       shiftPos(p, off).notes.forEach(([s,f]) => {
-        const k = s+','+f;
+        const k = s + ',' + f;
         if (!seen.has(k)) { seen.add(k); posNotes.push([s,f]); }
       });
     });
@@ -903,24 +937,28 @@ async function togglePlay() {
 
   isPlaying = true;
   updatePlayBtn();
+  _lastHoverMidi = -1;
 
-  // Schedule each note directly (no Tone.Transport — simpler & more reliable)
-  const now = Tone.now();
+  // Schedule notes using AudioContext time (no Transport needed)
+  const t0 = ctx.currentTime + 0.05;
   posNotes.forEach(([s,f], i) => {
-    const tid = setTimeout(() => {
-      if (!isPlaying) return;
-      try { sampler.triggerAttackRelease(midiToNote(getMidi(s,f)), '4n', now + i * STEP_SEC, 0.78); }
-      catch(e) {}
-    }, i * STEP_SEC * 1000);
-    playTimers.push(tid);
+    pluck(ctx, midiToHz(getMidi(s,f)), t0 + i * (STEP_MS / 1000), 0.78);
   });
 
-  // Auto-stop after last note finishes
-  const endTid = setTimeout(() => {
-    isPlaying = false;
-    updatePlayBtn();
-  }, posNotes.length * STEP_SEC * 1000 + 1200);
-  playTimers.push(endTid);
+  // Auto-stop UI after all notes finish
+  const endMs = posNotes.length * STEP_MS + 1400;
+  const tid = setTimeout(() => { isPlaying = false; updatePlayBtn(); }, endMs);
+  playTimers.push(tid);
+}
+
+// Attach touch handler to SVG after first render
+function attachSvgTouchHandler() {
+  const svg = document.getElementById('fb');
+  if (svg && !svg._touchAttached) {
+    svg.addEventListener('touchmove', onSvgTouch, { passive: false });
+    svg.addEventListener('touchstart', onSvgTouch, { passive: false });
+    svg._touchAttached = true;
+  }
 }
 
 window.selPos  = id   => { curPos = id; stopPlay(); renderUI(); };
