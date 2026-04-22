@@ -777,23 +777,18 @@ function renderUI() {
 }
 
 
-// ─── AUDIO ENGINE — Tone.js Sampler (acoustic guitar) ─────────────
-// MIDI note numbers for open strings (index 0=e high … 5=E low)
-const OPEN_MIDI = [64, 59, 55, 50, 45, 40];
-
-function getMidi(str, fret) { return OPEN_MIDI[str] + fret; }
-
-// Convert MIDI number to Tone.js note name (e.g. 69 → "A4")
+// ─── AUDIO ENGINE (reescrito) ──────────────────────────────────────
+const OPEN_MIDI  = [64, 59, 55, 50, 45, 40]; // e B G D A E
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-function midiToNote(m) { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
+const STEP_SEC   = 60 / 90; // 90 BPM
 
-// 90 BPM quarter note = 667 ms
-const STEP_SEC = 60 / 90;
+function getMidi(str, fret)  { return OPEN_MIDI[str] + fret; }
+function midiToNote(m)       { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
 
-let sampler = null;
+let sampler      = null;
 let samplerReady = false;
-let isPlaying = false;
-let playPart = null;
+let isPlaying    = false;
+let playTimers   = [];
 
 const GUITAR_BASE = 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_steel-mp3/';
 const GUITAR_URLS = {'E2':'E2.mp3','A2':'A2.mp3','D3':'D3.mp3','G3':'G3.mp3','B3':'B3.mp3','E4':'E4.mp3'};
@@ -803,61 +798,51 @@ function initSampler() {
   sampler = new Tone.Sampler({
     urls: GUITAR_URLS,
     baseUrl: GUITAR_BASE,
-    onload: () => {
-      samplerReady = true;
-      // Remove loading indicator if still visible
-      const lbl = document.getElementById('play-label');
-      if (lbl && lbl.textContent === 'Cargando…') lbl.textContent = 'Escuchar';
-    },
+    onload: () => { samplerReady = true; },
     release: 1.2,
   }).toDestination();
 }
 
-// Auto-init sampler on first user interaction anywhere on the page
-let autoInitDone = false;
-async function autoInitAudio() {
-  if (autoInitDone) return;
-  autoInitDone = true;
-  await Tone.start();
+// ── Unlock AudioContext + load sampler on first gesture ─────────────
+// Tone.start() MUST be called synchronously inside the event handler on iOS
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  Tone.start();   // sync call — no await — works on iOS/Android
   initSampler();
 }
-document.addEventListener('click',     autoInitAudio, { passive: true });
-document.addEventListener('touchstart', autoInitAudio, { passive: true });
-document.addEventListener('mousemove', autoInitAudio, { once: true, passive: true });
+document.addEventListener('click',     unlockAudio, { passive: true });
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('mousemove', unlockAudio, { once: true, passive: true });
 
+// ── Stop playback ────────────────────────────────────────────────────
 function stopPlay() {
-  if (playPart) { playPart.dispose(); playPart = null; }
-  Tone.getTransport().stop();
-  Tone.getTransport().cancel();
+  playTimers.forEach(clearTimeout);
+  playTimers = [];
   isPlaying = false;
   updatePlayBtn();
 }
 
-// Hover note preview — fully self-sufficient, works on desktop and mobile
-async function hoverNote(midi) {
-  // 1. Unlock Web Audio (required on mobile on every gesture)
-  await Tone.start();
-  // 2. Init sampler if not done yet
-  if (!sampler) initSampler();
-  // 3. Wait up to 3s for samples to load
-  if (!samplerReady) {
-    await new Promise(res => {
-      const chk = setInterval(() => {
-        if (samplerReady) { clearInterval(chk); res(); }
-      }, 80);
-      setTimeout(() => { clearInterval(chk); res(); }, 3000);
-    });
-  }
-  // 4. Play
-  if (samplerReady && sampler) {
-    sampler.triggerAttackRelease(midiToNote(midi), '8n', Tone.now(), 0.68);
-  }
+// ── Hover preview — debounced, suppressed during playback ────────────
+let hoverTimer = null;
+function hoverNote(midi) {
+  if (isPlaying) return;           // don't interrupt sequence playback
+  if (!audioUnlocked) unlockAudio();
+  if (!samplerReady || !sampler) return;
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => {
+    try { sampler.triggerAttackRelease(midiToNote(midi), '8n', Tone.now(), 0.65); }
+    catch(e) {}
+  }, 20); // 20ms debounce prevents rapid firing as cursor crosses dots
 }
 
+// ── Update play button UI ────────────────────────────────────────────
 function updatePlayBtn() {
-  const btn = document.getElementById('play-btn');
+  const btn  = document.getElementById('play-btn');
   const icon = document.getElementById('play-icon');
-  const lbl = document.getElementById('play-label');
+  const lbl  = document.getElementById('play-label');
+  if (!btn) return;
   const col = curPos > 0 ? BASE[curPos-1].col : '#1D9E75';
   btn.style.setProperty('--pc', col);
   if (isPlaying) {
@@ -871,29 +856,32 @@ function updatePlayBtn() {
   }
 }
 
+// ── Play sequence ────────────────────────────────────────────────────
 async function togglePlay() {
   if (isPlaying) { stopPlay(); return; }
 
-  // Unlock Web Audio context (critical on iOS/Android)
+  // Unlock audio context first (sync call for mobile compatibility)
+  unlockAudio();
+  // Then await Tone.start() to ensure context is running
   await Tone.start();
 
-  // Init sampler if not done yet
   if (!sampler) initSampler();
 
-  // Wait for samples to load, show feedback
+  // Wait for samples (max 8s)
   if (!samplerReady) {
-    const lbl = document.getElementById('play-label');
-    lbl.textContent = 'Cargando…';
+    document.getElementById('play-label').textContent = 'Cargando…';
     await new Promise(res => {
-      const check = setInterval(() => { if (samplerReady) { clearInterval(check); res(); } }, 100);
-      setTimeout(() => { clearInterval(check); res(); }, 8000); // max 8s timeout
+      const t = setInterval(() => { if (samplerReady) { clearInterval(t); res(); } }, 100);
+      setTimeout(() => { clearInterval(t); res(); }, 8000);
     });
-    document.getElementById('play-label').textContent = 'Escuchar';
+    if (!samplerReady) {
+      document.getElementById('play-label').textContent = 'Escuchar';
+      return; // timeout — can't play
+    }
   }
 
   const off = patternOff();
   let posNotes;
-
   if (curPos === 0) {
     const seen = new Set();
     posNotes = [];
@@ -904,40 +892,35 @@ async function togglePlay() {
       });
     });
   } else {
-    posNotes = shiftPos(BASE[curPos-1], off).notes;
+    posNotes = shiftPos(BASE[curPos-1], off).notes.slice();
   }
 
-  // Sort low → high by MIDI pitch
-  posNotes = posNotes.slice().sort((a,b) => getMidi(a[0],a[1]) - getMidi(b[0],b[1]));
-  // Remove true pitch duplicates
-  posNotes = posNotes.filter((n,i) => {
-    if (i === 0) return true;
-    return getMidi(n[0],n[1]) !== getMidi(posNotes[i-1][0], posNotes[i-1][1]);
-  });
+  // Sort low → high, remove exact MIDI duplicates
+  posNotes.sort((a,b) => getMidi(a[0],a[1]) - getMidi(b[0],b[1]));
+  posNotes = posNotes.filter((n,i) =>
+    i === 0 || getMidi(n[0],n[1]) !== getMidi(posNotes[i-1][0], posNotes[i-1][1])
+  );
 
   isPlaying = true;
   updatePlayBtn();
 
-  // Build a Tone.js Part (sequence of timed events)
-  Tone.getTransport().bpm.value = 90;
-  Tone.getTransport().cancel();
+  // Schedule each note directly (no Tone.Transport — simpler & more reliable)
+  const now = Tone.now();
+  posNotes.forEach(([s,f], i) => {
+    const tid = setTimeout(() => {
+      if (!isPlaying) return;
+      try { sampler.triggerAttackRelease(midiToNote(getMidi(s,f)), '4n', now + i * STEP_SEC, 0.78); }
+      catch(e) {}
+    }, i * STEP_SEC * 1000);
+    playTimers.push(tid);
+  });
 
-  const events = posNotes.map(([s,f], i) => [i * STEP_SEC, midiToNote(getMidi(s,f))]);
-  const totalDur = posNotes.length * STEP_SEC + 1.5;
-
-  playPart = new Tone.Part((time, note) => {
-    sampler.triggerAttackRelease(note, '4n', time, 0.75);
-  }, events);
-
-  playPart.start(0);
-  Tone.getTransport().start();
-
-  // Auto-stop
-  Tone.getTransport().scheduleOnce(() => {
-    Tone.getTransport().stop();
+  // Auto-stop after last note finishes
+  const endTid = setTimeout(() => {
     isPlaying = false;
     updatePlayBtn();
-  }, totalDur);
+  }, posNotes.length * STEP_SEC * 1000 + 1200);
+  playTimers.push(endTid);
 }
 
 window.selPos  = id   => { curPos = id; stopPlay(); renderUI(); };
