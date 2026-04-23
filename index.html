@@ -834,14 +834,31 @@ function resumeCtx() {
   return _ctx;
 }
 
-// Unlock on first scroll (desktop — no click needed)
-function _unlockOnScroll() {
-  resumeCtx();
-  window.removeEventListener('wheel',      _unlockOnScroll);
-  window.removeEventListener('keydown',    _unlockOnScroll);
+// iOS WebKit requires playing a real (even silent) sound synchronously
+// within the gesture handler to fully unlock the AudioContext.
+// Call this once per gesture before scheduling any audio.
+function unlockWithSilence(ctx) {
+  if (!ctx) return;
+  try {
+    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    src.stop(0.001);
+  } catch(e) {}
 }
-window.addEventListener('wheel',   _unlockOnScroll, { passive: true });
-window.addEventListener('keydown', _unlockOnScroll, { passive: true });
+
+// Unlock on first interaction — covers mouse, touchpad, keyboard
+function _unlockOnInteraction() {
+  resumeCtx();
+  ['wheel','pointermove','keydown'].forEach(ev =>
+    window.removeEventListener(ev, _unlockOnInteraction)
+  );
+}
+['wheel','pointermove','keydown'].forEach(ev =>
+  window.addEventListener(ev, _unlockOnInteraction, { passive: true, once: false })
+);
 
 // ── Karplus-Strong pluck synthesis ───────────────────────────────────
 function pluck(ctx, freq, startTime, vol) {
@@ -893,14 +910,13 @@ let _lastHoverMidi = -1;
 let _hoverTimer    = null;
 function hoverNote(midi) {
   if (isPlaying) return;
-  if (midi === _lastHoverMidi) return; // same note, skip
+  if (midi === _lastHoverMidi) return;
   _lastHoverMidi = midi;
   clearTimeout(_hoverTimer);
-  // Call synchronously — iOS requires audio calls within the gesture handler
   const ctx = resumeCtx();
   if (!ctx) return;
-  pluck(ctx, midiToHz(midi), ctx.currentTime + 0.01, 0.65);
-  // Reset _lastHoverMidi after 300ms so same note can retrigger
+  unlockWithSilence(ctx);          // iOS WebKit unlock
+  pluck(ctx, midiToHz(midi), ctx.currentTime + 0.015, 0.65);
   _hoverTimer = setTimeout(() => { _lastHoverMidi = -1; }, 300);
 }
 
@@ -953,8 +969,8 @@ function updatePlayBtn() {
 
 // ── Play sequence ────────────────────────────────────────────────────
 function togglePlay() {
-  // resumeCtx() MUST be the very first thing — iOS requires sync call
-  const ctx = resumeCtx();
+  const ctx = resumeCtx();          // must be first, sync, inside gesture
+  unlockWithSilence(ctx);           // iOS WebKit: play silent buffer to unlock
   if (isPlaying) { stopPlay(); return; }
 
   const off = patternOff();
