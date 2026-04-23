@@ -816,26 +816,32 @@ function getMidi(str, fret)  { return OPEN_MIDI[str] + fret; }
 function midiToHz(midi)      { return 440 * Math.pow(2, (midi - 69) / 12); }
 function midiToNote(m)       { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
 
-// ── AudioContext — created on first gesture, iOS-safe ───────────────
+// ── AudioContext — cross-browser, iOS/Android/Brave safe ────────────
+// Rules:
+//  1. Create AudioContext inside a user gesture (iOS WebKit requirement)
+//  2. Call resume() synchronously in every gesture handler
+//  3. Activate on click, touch AND scroll (desktop convenience)
 let _ctx = null;
-function getCtx() {
-  if (!_ctx) {
-    try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch(e) {}
-  }
-  return _ctx;
-}
-// Call this synchronously inside every user gesture
+
 function resumeCtx() {
   if (!_ctx) {
     try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch(e) { return null; }
   }
-  if (_ctx.state === 'suspended') {
-    _ctx.resume(); // sync, no await — iOS Safari requires this
-  }
+  try {
+    if (_ctx.state !== 'running') _ctx.resume();
+  } catch(e) {}
   return _ctx;
 }
+
+// Unlock on first scroll (desktop — no click needed)
+function _unlockOnScroll() {
+  resumeCtx();
+  window.removeEventListener('wheel',      _unlockOnScroll);
+  window.removeEventListener('keydown',    _unlockOnScroll);
+}
+window.addEventListener('wheel',   _unlockOnScroll, { passive: true });
+window.addEventListener('keydown', _unlockOnScroll, { passive: true });
 
 // ── Karplus-Strong pluck synthesis ───────────────────────────────────
 function pluck(ctx, freq, startTime, vol) {
@@ -903,7 +909,6 @@ function hoverNote(midi) {
 let _activeSlots = []; // populated after each draw()
 
 function onSvgTouch(e) {
-  e.preventDefault();
   const svg    = document.getElementById('fb');
   const rect   = svg.getBoundingClientRect();
   const vbW    = 975, vbH = 210;
@@ -918,7 +923,13 @@ function onSvgTouch(e) {
     const d = Math.hypot(slot.x - px, slot.y - py);
     if (d < bestD) { bestD = d; best = slot; }
   });
-  if (best && bestD < 18) hoverNote(best.midi);
+
+  if (best && bestD < 18) {
+    // Finger is on a note dot — prevent scroll and play note
+    e.preventDefault();
+    hoverNote(best.midi);
+  }
+  // Otherwise: don't preventDefault → scroll works normally
 }
 
 // ── Play button UI ───────────────────────────────────────────────────
@@ -987,8 +998,11 @@ function togglePlay() {
 function attachSvgTouchHandler() {
   const svg = document.getElementById('fb');
   if (svg && !svg._touchAttached) {
-    svg.addEventListener('touchmove', onSvgTouch, { passive: false });
+    // passive:false needed so we can conditionally preventDefault on note hits
+    // touchstart: tap a dot to play
+    // touchmove: drag finger across dots to play them in sequence
     svg.addEventListener('touchstart', onSvgTouch, { passive: false });
+    svg.addEventListener('touchmove',  onSvgTouch, { passive: false });
     svg._touchAttached = true;
   }
 }
