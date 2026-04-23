@@ -715,6 +715,28 @@ function draw() {
     if (on) _activeSlots.push({ x, y, midi });
   });
   attachSvgTouchHandler();
+  scrollToPosition();
+}
+
+// Auto-scroll fretboard so active position is centred on mobile
+function scrollToPosition() {
+  const wrap = document.querySelector('.fbwrap');
+  if (!wrap) return;
+  if (_activeSlots.length === 0) { wrap.scrollLeft = 0; return; }
+
+  // Get SVG rendered width vs viewBox width to compute scale
+  const svg   = document.getElementById('fb');
+  const vbW   = 975;
+  const scale = svg ? svg.getBoundingClientRect().width / vbW : 1;
+
+  const xs   = _activeSlots.map(s => s.x);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const midX = (minX + maxX) / 2 * scale;
+
+  // Centre the active zone in the visible area, with a bit of left padding
+  const targetScroll = midX - wrap.clientWidth / 2;
+  wrap.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
 }
 
 function renderUI() {
@@ -794,17 +816,25 @@ function getMidi(str, fret)  { return OPEN_MIDI[str] + fret; }
 function midiToHz(midi)      { return 440 * Math.pow(2, (midi - 69) / 12); }
 function midiToNote(m)       { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
 
-// ── AudioContext singleton ───────────────────────────────────────────
+// ── AudioContext — created on first gesture, iOS-safe ───────────────
 let _ctx = null;
 function getCtx() {
-  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!_ctx) {
+    try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) {}
+  }
   return _ctx;
 }
-// Resume must be called synchronously inside a user gesture
+// Call this synchronously inside every user gesture
 function resumeCtx() {
-  const ctx = getCtx();
-  if (ctx.state === 'suspended') ctx.resume();
-  return ctx;
+  if (!_ctx) {
+    try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (_ctx.state === 'suspended') {
+    _ctx.resume(); // sync, no await — iOS Safari requires this
+  }
+  return _ctx;
 }
 
 // ── Karplus-Strong pluck synthesis ───────────────────────────────────
@@ -857,13 +887,15 @@ let _lastHoverMidi = -1;
 let _hoverTimer    = null;
 function hoverNote(midi) {
   if (isPlaying) return;
-  if (midi === _lastHoverMidi) return;    // same note, skip
+  if (midi === _lastHoverMidi) return; // same note, skip
   _lastHoverMidi = midi;
   clearTimeout(_hoverTimer);
-  _hoverTimer = setTimeout(() => {
-    const ctx = resumeCtx();              // sync resume — works on mobile
-    pluck(ctx, midiToHz(midi), ctx.currentTime, 0.65);
-  }, 25);
+  // Call synchronously — iOS requires audio calls within the gesture handler
+  const ctx = resumeCtx();
+  if (!ctx) return;
+  pluck(ctx, midiToHz(midi), ctx.currentTime + 0.01, 0.65);
+  // Reset _lastHoverMidi after 300ms so same note can retrigger
+  _hoverTimer = setTimeout(() => { _lastHoverMidi = -1; }, 300);
 }
 
 // ── Touch handler on SVG (mobile hover equivalent) ───────────────────
