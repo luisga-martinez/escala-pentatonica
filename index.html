@@ -805,134 +805,145 @@ function renderUI() {
 }
 
 
-// ─── AUDIO ENGINE — Karplus-Strong synthesis (no deps, works on mobile) ────
-//
-// Open string frequencies (index 0=e thin … 5=E thick)
-const OPEN_MIDI  = [64, 59, 55, 50, 45, 40];
+// ─── AUDIO ENGINE ────────────────────────────────────────────────────
+const OPEN_MIDI  = [64, 59, 55, 50, 45, 40]; // e B G D A E
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const STEP_MS    = Math.round(60000 / 90); // 90 BPM → 667 ms
+const STEP_MS    = Math.round(60000 / 90); // 90 BPM
 
-function getMidi(str, fret)  { return OPEN_MIDI[str] + fret; }
-function midiToHz(midi)      { return 440 * Math.pow(2, (midi - 69) / 12); }
-function midiToNote(m)       { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
+function getMidi(str, fret) { return OPEN_MIDI[str] + fret; }
+function midiToHz(midi)     { return 440 * Math.pow(2, (midi - 69) / 12); }
+function midiToNote(m)      { return NOTE_NAMES[m % 12] + Math.floor(m / 12 - 1); }
 
-// ── AudioContext — cross-browser, iOS/Android/Brave safe ────────────
-// Rules:
-//  1. Create AudioContext inside a user gesture (iOS WebKit requirement)
-//  2. Call resume() synchronously in every gesture handler
-//  3. Activate on click, touch AND scroll (desktop convenience)
+// ─── AudioContext ─────────────────────────────────────────────────────
+// Never create at module load — always inside a gesture handler on iOS
 let _ctx = null;
-
-function resumeCtx() {
+function getOrCreateCtx() {
   if (!_ctx) {
-    try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch(e) { return null; }
+    _ctx = new (window.AudioContext || window.webkitAudioContext)({
+      latencyHint: 'playback'  // uses media channel → bypasses iOS silent switch
+    });
   }
-  try {
-    if (_ctx.state !== 'running') _ctx.resume();
-  } catch(e) {}
+  if (_ctx.state === 'suspended') _ctx.resume();
   return _ctx;
 }
 
-// iOS WebKit requires playing a real (even silent) sound synchronously
-// within the gesture handler to fully unlock the AudioContext.
-// Call this once per gesture before scheduling any audio.
-function unlockWithSilence(ctx) {
-  if (!ctx) return;
-  try {
-    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-    src.stop(0.001);
-  } catch(e) {}
+// Play a 1-sample silent buffer — stamps the ctx as gesture-activated on iOS
+function stampCtx(ctx) {
+  const b = ctx.createBuffer(1, 1, ctx.sampleRate);
+  const s = ctx.createBufferSource();
+  s.buffer = b;
+  s.connect(getMasterGain(ctx));
+  s.start(0);
 }
 
-// Unlock on first interaction — covers mouse, touchpad, keyboard
-function _unlockOnInteraction() {
-  resumeCtx();
-  ['wheel','pointermove','keydown'].forEach(ev =>
-    window.removeEventListener(ev, _unlockOnInteraction)
-  );
-}
-['wheel','pointermove','keydown'].forEach(ev =>
-  window.addEventListener(ev, _unlockOnInteraction, { passive: true, once: false })
-);
+// ─── Synth: simple oscillator (instant — used for hover/tap) ─────────
+function pluckSimple(ctx, freq, vol) {
+  vol = vol || 0.6;
+  const now  = ctx.currentTime;
+  const dur  = 1.4;
+  const osc  = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const lp   = ctx.createBiquadFilter();
 
-// ── Karplus-Strong pluck synthesis ───────────────────────────────────
-function pluck(ctx, freq, startTime, vol) {
-  vol = vol || 0.72;
+  osc.type  = 'triangle'; osc.frequency.value  = freq;
+  osc2.type = 'sine';     osc2.frequency.value = freq * 2.003;
+
+  lp.type = 'lowpass'; lp.frequency.value = 2400;
+
+  gain.gain.setValueAtTime(vol, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+  osc.connect(lp); osc2.connect(lp); lp.connect(gain);
+  gain.connect(getMasterGain(ctx));
+  osc.start(now);  osc.stop(now + dur);
+  osc2.start(now); osc2.stop(now + dur);
+}
+
+// ─── Synth: Karplus-Strong (used for "Escuchar" sequence) ────────────
+function pluckKS(ctx, freq, startTime, vol) {
+  vol = vol || 0.75;
   const sr  = ctx.sampleRate;
   const N   = Math.max(2, Math.round(sr / freq));
-  const dur = 2.2; // seconds of decay
+  const dur = 2.2;
   const len = Math.ceil(dur * sr);
-
-  // Buffer with noise seed + Karplus-Strong recurrence
   const buf  = ctx.createBuffer(1, len, sr);
   const data = buf.getChannelData(0);
   for (let i = 0; i < N; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-  for (let i = N; i < len; i++) {
-    data[i] = 0.498 * (data[i - N] + data[i - (N - 1 < 1 ? 1 : N - 1)]);
-  }
-
+  for (let i = N; i < len; i++)
+    data[i] = 0.498 * (data[i-N] + data[i - Math.max(1, N-1)]);
   const src  = ctx.createBufferSource();
   src.buffer = buf;
-
-  // Low-pass for warmth
   const lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 3800;
-
-  // Gain envelope
+  lp.type = 'lowpass'; lp.frequency.value = 3800;
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(vol, startTime);
   gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
-
-  src.connect(lp); lp.connect(gain); gain.connect(ctx.destination);
-  src.start(startTime);
-  src.stop(startTime + dur);
+  src.connect(lp); lp.connect(gain);
+  gain.connect(getMasterGain(ctx));
+  src.start(startTime); src.stop(startTime + dur);
 }
 
-// ── Playback state ───────────────────────────────────────────────────
+// ─── Playback state ───────────────────────────────────────────────────
 let isPlaying  = false;
 let playTimers = [];
+let _masterGain = null;
+
+function getMasterGain(ctx) {
+  if (!_masterGain) {
+    _masterGain = ctx.createGain();
+    _masterGain.connect(ctx.destination);
+  }
+  return _masterGain;
+}
 
 function stopPlay() {
   playTimers.forEach(clearTimeout);
   playTimers = [];
   isPlaying = false;
+  // Immediately silence all playing nodes
+  if (_masterGain && _ctx) {
+    _masterGain.gain.cancelScheduledValues(_ctx.currentTime);
+    _masterGain.gain.setValueAtTime(0, _ctx.currentTime);
+    // Restore gain after a short pause for next playback
+    setTimeout(() => {
+      if (_masterGain && _ctx) {
+        _masterGain.gain.setValueAtTime(1, _ctx.currentTime);
+      }
+    }, 200);
+  }
   updatePlayBtn();
 }
 
-// ── Hover note (debounced, suppressed during playback) ───────────────
+// ─── Hover / Tap note ─────────────────────────────────────────────────
 let _lastHoverMidi = -1;
-let _hoverTimer    = null;
+let _hoverCooldown = false;
+
 function hoverNote(midi) {
-  if (isPlaying) return;
+  if (isPlaying)       return;
+  if (_hoverCooldown)  return;
   if (midi === _lastHoverMidi) return;
   _lastHoverMidi = midi;
-  clearTimeout(_hoverTimer);
-  const ctx = resumeCtx();
-  if (!ctx) return;
-  unlockWithSilence(ctx);          // iOS WebKit unlock
-  pluck(ctx, midiToHz(midi), ctx.currentTime + 0.015, 0.65);
-  _hoverTimer = setTimeout(() => { _lastHoverMidi = -1; }, 300);
+  _hoverCooldown = true;
+  setTimeout(() => { _hoverCooldown = false; _lastHoverMidi = -1; }, 280);
+
+  // getOrCreateCtx + stampCtx MUST run synchronously in the gesture call stack
+  const ctx = getOrCreateCtx();
+  stampCtx(ctx);                        // iOS WebKit unlock trick
+  pluckSimple(ctx, midiToHz(midi));     // instant oscillator — no buffer wait
 }
 
-// ── Touch handler on SVG (mobile hover equivalent) ───────────────────
-// We add a touchmove listener to the SVG so dragging finger plays notes
-let _activeSlots = []; // populated after each draw()
+// ─── Touch handler for mobile (tap or drag across dots) ──────────────
+let _activeSlots = [];
 
 function onSvgTouch(e) {
-  const svg    = document.getElementById('fb');
-  const rect   = svg.getBoundingClientRect();
-  const vbW    = 975, vbH = 210;
-  const scaleX = vbW / rect.width;
-  const scaleY = vbH / rect.height;
-  const touch  = e.touches[0];
-  const px     = (touch.clientX - rect.left) * scaleX;
-  const py     = (touch.clientY - rect.top)  * scaleY;
+  const svg   = document.getElementById('fb');
+  const rect  = svg.getBoundingClientRect();
+  const scaleX = 975 / rect.width;
+  const scaleY = 210 / rect.height;
+  const touch = e.touches[0];
+  const px = (touch.clientX - rect.left) * scaleX;
+  const py = (touch.clientY - rect.top)  * scaleY;
 
   let best = null, bestD = 999;
   _activeSlots.forEach(slot => {
@@ -940,15 +951,32 @@ function onSvgTouch(e) {
     if (d < bestD) { bestD = d; best = slot; }
   });
 
-  if (best && bestD < 18) {
-    // Finger is on a note dot — prevent scroll and play note
-    e.preventDefault();
+  if (best && bestD < 20) {
+    e.preventDefault();   // stop scroll only when on a dot
     hoverNote(best.midi);
   }
-  // Otherwise: don't preventDefault → scroll works normally
 }
 
-// ── Play button UI ───────────────────────────────────────────────────
+function attachSvgTouchHandler() {
+  const svg = document.getElementById('fb');
+  if (svg && !svg._touchAttached) {
+    svg.addEventListener('touchstart', onSvgTouch, { passive: false });
+    svg.addEventListener('touchmove',  onSvgTouch, { passive: false });
+    svg._touchAttached = true;
+  }
+}
+
+// ─── Desktop unlock: any pointer/mouse movement ───────────────────────
+// Does NOT create context — just resumes it if already created by a gesture
+// Real creation still happens inside hoverNote/togglePlay (gesture-safe)
+function _resumeIfExists() {
+  if (_ctx && _ctx.state === 'suspended') _ctx.resume();
+}
+window.addEventListener('mousemove',   _resumeIfExists, { passive: true });
+window.addEventListener('pointermove', _resumeIfExists, { passive: true });
+window.addEventListener('wheel',       _resumeIfExists, { passive: true });
+
+// ─── Play button UI ───────────────────────────────────────────────────
 function updatePlayBtn() {
   const btn  = document.getElementById('play-btn');
   const icon = document.getElementById('play-icon');
@@ -967,28 +995,23 @@ function updatePlayBtn() {
   }
 }
 
-// ── Play sequence ────────────────────────────────────────────────────
+// ─── Escuchar: play full sequence ─────────────────────────────────────
 function togglePlay() {
-  const ctx = resumeCtx();          // must be first, sync, inside gesture
-  unlockWithSilence(ctx);           // iOS WebKit: play silent buffer to unlock
+  // getOrCreateCtx + stampCtx MUST be first, synchronous, in the click handler
+  const ctx = getOrCreateCtx();
+  stampCtx(ctx);
   if (isPlaying) { stopPlay(); return; }
 
   const off = patternOff();
   let posNotes;
   if (curPos === 0) {
-    const seen = new Set();
-    posNotes = [];
-    BASE.forEach(p => {
-      shiftPos(p, off).notes.forEach(([s,f]) => {
-        const k = s + ',' + f;
-        if (!seen.has(k)) { seen.add(k); posNotes.push([s,f]); }
-      });
-    });
+    const seen = new Set(); posNotes = [];
+    BASE.forEach(p => shiftPos(p, off).notes.forEach(([s,f]) => {
+      const k = s+','+f; if (!seen.has(k)) { seen.add(k); posNotes.push([s,f]); }
+    }));
   } else {
     posNotes = shiftPos(BASE[curPos-1], off).notes.slice();
   }
-
-  // Sort low → high, remove exact MIDI duplicates
   posNotes.sort((a,b) => getMidi(a[0],a[1]) - getMidi(b[0],b[1]));
   posNotes = posNotes.filter((n,i) =>
     i === 0 || getMidi(n[0],n[1]) !== getMidi(posNotes[i-1][0], posNotes[i-1][1])
@@ -998,29 +1021,13 @@ function togglePlay() {
   updatePlayBtn();
   _lastHoverMidi = -1;
 
-  // Schedule notes using AudioContext time (no Transport needed)
   const t0 = ctx.currentTime + 0.05;
   posNotes.forEach(([s,f], i) => {
-    pluck(ctx, midiToHz(getMidi(s,f)), t0 + i * (STEP_MS / 1000), 0.78);
+    pluckKS(ctx, midiToHz(getMidi(s,f)), t0 + i * (STEP_MS / 1000), 0.78);
   });
 
-  // Auto-stop UI after all notes finish
   const endMs = posNotes.length * STEP_MS + 1400;
-  const tid = setTimeout(() => { isPlaying = false; updatePlayBtn(); }, endMs);
-  playTimers.push(tid);
-}
-
-// Attach touch handler to SVG after first render
-function attachSvgTouchHandler() {
-  const svg = document.getElementById('fb');
-  if (svg && !svg._touchAttached) {
-    // passive:false needed so we can conditionally preventDefault on note hits
-    // touchstart: tap a dot to play
-    // touchmove: drag finger across dots to play them in sequence
-    svg.addEventListener('touchstart', onSvgTouch, { passive: false });
-    svg.addEventListener('touchmove',  onSvgTouch, { passive: false });
-    svg._touchAttached = true;
-  }
+  playTimers.push(setTimeout(() => { isPlaying = false; updatePlayBtn(); }, endMs));
 }
 
 window.selPos  = id   => { curPos = id; stopPlay(); renderUI(); };
