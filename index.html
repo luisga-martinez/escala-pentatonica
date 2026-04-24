@@ -820,11 +820,34 @@ let _ctx = null;
 function getOrCreateCtx() {
   if (!_ctx) {
     _ctx = new (window.AudioContext || window.webkitAudioContext)({
-      latencyHint: 'playback'  // uses media channel → bypasses iOS silent switch
+      latencyHint: 'playback'
     });
   }
   if (_ctx.state === 'suspended') _ctx.resume();
   return _ctx;
+}
+
+// ── iOS silent-switch bypass ──────────────────────────────────────────
+// Playing a real <audio> element (even silent) registers the page as a
+// media session, which routes ALL audio — including Web Audio API —
+// through the media channel that ignores the silent switch.
+// This is the same technique used by Howler.js and Tone.js internally.
+const _SILENT_MP3 = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhgCenp6enp6enp6enp6enp6enp6enp6enp6enp6enp6enp6enp6enp6enp6enp6e////////////////////////////////////////////////////////////////AAAAAExhdmM1OC41AAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+let _audioUnlocked = false;
+let _silentAudio   = null;
+
+function _unlockMediaSession() {
+  if (_audioUnlocked) return;
+  _audioUnlocked = true;
+  try {
+    if (!_silentAudio) {
+      _silentAudio = new Audio(_SILENT_MP3);
+      _silentAudio.loop   = false;
+      _silentAudio.volume = 0.001;
+    }
+    const p = _silentAudio.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch(e) {}
 }
 
 // Play a 1-sample silent buffer — stamps the ctx as gesture-activated on iOS
@@ -927,10 +950,10 @@ function hoverNote(midi) {
   _hoverCooldown = true;
   setTimeout(() => { _hoverCooldown = false; _lastHoverMidi = -1; }, 280);
 
-  // getOrCreateCtx + stampCtx MUST run synchronously in the gesture call stack
+  _unlockMediaSession();                // register media session → bypass silent switch
   const ctx = getOrCreateCtx();
-  stampCtx(ctx);                        // iOS WebKit unlock trick
-  pluckSimple(ctx, midiToHz(midi));     // instant oscillator — no buffer wait
+  stampCtx(ctx);
+  pluckSimple(ctx, midiToHz(midi));
 }
 
 // ─── Touch handler for mobile (tap or drag across dots) ──────────────
@@ -997,7 +1020,7 @@ function updatePlayBtn() {
 
 // ─── Escuchar: play full sequence ─────────────────────────────────────
 function togglePlay() {
-  // getOrCreateCtx + stampCtx MUST be first, synchronous, in the click handler
+  _unlockMediaSession();                // register media session → bypass silent switch
   const ctx = getOrCreateCtx();
   stampCtx(ctx);
   if (isPlaying) { stopPlay(); return; }
