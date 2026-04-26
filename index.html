@@ -363,6 +363,12 @@ footer{
 </head>
 <body>
 
+<div class="lang-row">
+  <div class="lang-toggle">
+    <button class="lang-btn on" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
 <header>
   <p class="brand">Luisga <span>Martínez</span></p>
   <h1>Escala <span class="acc">Pentatónica</span></h1>
@@ -388,9 +394,9 @@ footer{
   </div>
 
   <div class="orow">
-    <button class="obtn" id="obtn-notes"     onclick="selOverlay('notes')"    ><span class="obadge">A</span>Notas</button>
-    <button class="obtn" id="obtn-intervals" onclick="selOverlay('intervals')"><span class="obadge">♭3</span>Intervalos</button>
-    <button class="obtn" id="obtn-fingering" onclick="selOverlay('fingering')"><span class="obadge">1</span>Digitación</button>
+    <button class="obtn" id="obtn-notes"     onclick="selOverlay('notes')"    ><span class="obadge">A</span><span>Notas</span></button>
+    <button class="obtn" id="obtn-intervals" onclick="selOverlay('intervals')"><span class="obadge">♭3</span><span>Intervalos</span></button>
+    <button class="obtn" id="obtn-fingering" onclick="selOverlay('fingering')"><span class="obadge">1</span><span>Digitación</span></button>
   </div>
   <div class="fbwrap">
     <svg id="fb" viewBox="0 0 975 210" style="min-width:975px"></svg>
@@ -400,20 +406,20 @@ footer{
   <div class="legend">
     <div class="legend-item">
       <div class="ldot" id="ldot-scale" style="background:#1D9E75"></div>
-      Nota de la escala
+      <span id="ldot-scale-label">Nota de la escala</span>
     </div>
     <div class="legend-item">
       <div class="ldot" style="background:#c49a28"></div>
-      Fundamental
+      <span id="ldot-fund-label">Fundamental</span>
     </div>
   </div>
 
   <div class="igrid">
-    <div class="icard"><div class="lbl">Fórmula</div><div class="val" id="info-formula">1 · ♭3 · 4 · 5 · ♭7</div></div>
-    <div class="icard"><div class="lbl">Notas</div><div class="val" id="info-notes"></div></div>
-    <div class="icard"><div class="lbl">Posiciones</div><div class="val">5 posiciones</div></div>
+    <div class="icard"><div class="lbl" id="info-formula-label">Fórmula</div><div class="val" id="info-formula">1 · ♭3 · 4 · 5 · ♭7</div></div>
+    <div class="icard"><div class="lbl" id="info-notes-label">Notas</div><div class="val" id="info-notes"></div></div>
+    <div class="icard"><div class="lbl" id="info-pos-label">Posiciones</div><div class="val" id="info-pos-val">5 posiciones</div></div>
     <div class="icard icard-hand">
-      <div class="lbl">Digitación mano izquierda</div>
+      <div class="lbl" id="info-dig-label">Digitación mano izquierda</div>
       <div class="hand-wrap" style="margin-top:1.5rem">
         <div style="position:relative;display:inline-block;width:100%;max-width:160px">
           <img src="data:image/png;base64,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" alt="Silueta mano izquierda digitacion guitarra" style="width:100%;height:auto;display:block;opacity:.55;filter:invert(0)"/>
@@ -432,30 +438,30 @@ footer{
   <section class="seo-section" aria-label="Guía de la escala pentatónica en guitarra" style="padding:0 0 1rem">
     <hr class="seo-divider">
 
-    <h2>¿Qué es la escala pentatónica?</h2>
-    <p>La <strong>escala pentatónica</strong> es una de las escalas más importantes y utilizadas en la guitarra. Como su nombre indica, está formada por <strong>5 notas</strong> (del griego <em>penta</em>, cinco), lo que la hace más fácil de aprender y de aplicar que las escalas diatónicas de 7 notas. Es la escala base del blues, el rock, el pop y muchos otros estilos, y es la primera escala que aprende la mayoría de guitarristas cuando comienzan a improvisar.</p>
-    <p>Existen dos tipos principales: la <strong>escala pentatónica menor</strong> y la <strong>escala pentatónica mayor</strong>. Ambas comparten exactamente las mismas notas — lo que cambia es la posición de la fundamental, es decir, la nota desde la que se construye la escala. Por eso se dice que son escalas relativas entre sí.</p>
+    <h2 id="seo-h1">¿Qué es la escala pentatónica?</h2>
+    <p id="seo-p1">La <strong>escala pentatónica</strong> es una de las escalas más importantes y utilizadas en la guitarra. Como su nombre indica, está formada por <strong>5 notas</strong> (del griego <em>penta</em>, cinco), lo que la hace más fácil de aprender y de aplicar que las escalas diatónicas de 7 notas. Es la escala base del blues, el rock, el pop y muchos otros estilos, y es la primera escala que aprende la mayoría de guitarristas cuando comienzan a improvisar.</p>
+    <p id="seo-p2">Existen dos tipos principales: la <strong>escala pentatónica menor</strong> y la <strong>escala pentatónica mayor</strong>. Ambas comparten exactamente las mismas notas — lo que cambia es la posición de la fundamental, es decir, la nota desde la que se construye la escala. Por eso se dice que son escalas relativas entre sí.</p>
 
-    <h3>Escala pentatónica menor</h3>
-    <p>La <strong>pentatónica menor</strong> tiene una sonoridad oscura y expresiva, ideal para el blues, el rock y la improvisación sobre progresiones menores. Su fórmula interválica es <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. En La menor (Am), las notas son: <strong>La, Do, Re, Mi, Sol</strong>. Es la escala favorita de guitarristas como Jimi Hendrix, Eric Clapton, Carlos Santana y David Gilmour.</p>
+    <h3 id="seo-h2min">Escala pentatónica menor</h3>
+    <p id="seo-pmin">La <strong>pentatónica menor</strong> tiene una sonoridad oscura y expresiva, ideal para el blues, el rock y la improvisación sobre progresiones menores. Su fórmula interválica es <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. En La menor (Am), las notas son: <strong>La, Do, Re, Mi, Sol</strong>. Es la escala favorita de guitarristas como Jimi Hendrix, Eric Clapton, Carlos Santana y David Gilmour.</p>
 
-    <h3>Escala pentatónica mayor</h3>
-    <p>La <strong>pentatónica mayor</strong> tiene un sonido más brillante y optimista, muy usado en country, pop y rock melódico. Su fórmula es <strong>1 — 2 — 3 — 5 — 6</strong>. En Do mayor, las notas son: <strong>Do, Re, Mi, Sol, La</strong>. Guitarristas como Chuck Berry y Keith Richards la utilizan constantemente en sus solos.</p>
+    <h3 id="seo-h2maj">Escala pentatónica mayor</h3>
+    <p id="seo-pmaj">La <strong>pentatónica mayor</strong> tiene un sonido más brillante y optimista, muy usado en country, pop y rock melódico. Su fórmula es <strong>1 — 2 — 3 — 5 — 6</strong>. En Do mayor, las notas son: <strong>Do, Re, Mi, Sol, La</strong>. Guitarristas como Chuck Berry y Keith Richards la utilizan constantemente en sus solos.</p>
 
-    <h2>Las 5 posiciones de la escala pentatónica en el mástil</h2>
-    <p>La escala pentatónica se organiza en <strong>5 posiciones o cajas</strong> que cubren el mástil completo de la guitarra. Cada posición empieza desde una nota distinta de la escala, utiliza 2 notas por cuerda y se puede conectar con la siguiente, formando un sistema continuo por todo el diapasón. Aprender las 5 posiciones te da libertad total para improvisar en cualquier zona del mástil.</p>
+    <h2 id="seo-h3">Las 5 posiciones de la escala pentatónica en el mástil</h2>
+    <p id="seo-p3">La escala pentatónica se organiza en <strong>5 posiciones o cajas</strong> que cubren el mástil completo de la guitarra. Cada posición empieza desde una nota distinta de la escala, utiliza 2 notas por cuerda y se puede conectar con la siguiente, formando un sistema continuo por todo el diapasón. Aprender las 5 posiciones te da libertad total para improvisar en cualquier zona del mástil.</p>
 
-    <h2>Cómo practicar la escala pentatónica</h2>
-    <p>El método más eficaz es aprender una posición a la vez. Empieza por la posición 1, memorízala completamente y practícala despacio antes de aumentar la velocidad. Una vez la tengas interiorizada, incorpora la posición 2 y practica la transición entre ambas. Así con cada posición hasta dominar el mástil completo.</p>
-    <p>Para sacar el máximo partido a la escala pentatónica, practica siempre sobre una base musical — una progresión de blues, un backing track de rock o una progresión de acordes de tu canción favorita. Tocar la escala sobre música real es la única forma de desarrollar el oído y aprender a frasear con libertad.</p>
+    <h2 id="seo-h4">Cómo practicar la escala pentatónica</h2>
+    <p id="seo-p4">El método más eficaz es aprender una posición a la vez. Empieza por la posición 1, memorízala completamente y practícala despacio antes de aumentar la velocidad. Una vez la tengas interiorizada, incorpora la posición 2 y practica la transición entre ambas. Así con cada posición hasta dominar el mástil completo.</p>
+    <p id="seo-p5">Para sacar el máximo partido a la escala pentatónica, practica siempre sobre una base musical — una progresión de blues, un backing track de rock o una progresión de acordes de tu canción favorita. Tocar la escala sobre música real es la única forma de desarrollar el oído y aprender a frasear con libertad.</p>
 
-    <h2>Herramienta interactiva para guitarristas</h2>
-    <p>Este diagrama interactivo ha sido creado por <strong>Luisga Martínez</strong>, guitarrista y educador musical, como recurso gratuito para guitarristas de todos los niveles. Puedes seleccionar cualquier tonalidad, alternar entre pentatónica mayor y menor, explorar las 5 posiciones, ver las notas, los intervalos y la digitación de cada posición, y escuchar cómo suena cada nota al pasar el cursor sobre ella.</p>
+    <h2 id="seo-h5">Herramienta interactiva para guitarristas</h2>
+    <p id="seo-p6">Este diagrama interactivo ha sido creado por <strong>Luisga Martínez</strong>, guitarrista y educador musical, como recurso gratuito para guitarristas de todos los niveles. Puedes seleccionar cualquier tonalidad, alternar entre pentatónica mayor y menor, explorar las 5 posiciones, ver las notas, los intervalos y la digitación de cada posición, y escuchar cómo suena cada nota al pasar el cursor sobre ella.</p>
   </section>
 
   <!-- Donate section -->
   <div class="donate-section">
-    <p class="donate-msg">¿Te ha servido esta herramienta?<br>Puedes apoyar este proyecto con una donación.</p>
+    <p class="donate-msg" id="donate-msg">¿Te ha servido esta herramienta?<br>Puedes apoyar este proyecto con una donación.</p>
     <div id="donate-button-main"></div>
   </div>
 
@@ -481,9 +487,9 @@ footer{
         <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
       </a>
     </div>
-    <p class="footer-heart">Hecho con ♥ por <strong>Luisga Martínez</strong></p>
-    <p class="footer-brand">Luisga <span>Martínez</span> &nbsp;·&nbsp; Herramienta para alumnos</p>
-    <p class="footer-heart" style="font-size:11px;opacity:.6">Este sitio usa Google Analytics para medir visitas.</p>
+    <p class="footer-heart"><span id="footer-heart-text">Hecho con ♥ por</span> <strong>Luisga Martínez</strong></p>
+    <p class="footer-brand">Luisga <span>Martínez</span> &nbsp;·&nbsp; <span id="footer-tool">Herramienta para alumnos</span></p>
+    <p class="footer-heart" style="font-size:11px;opacity:.6" id="footer-ga">Este sitio usa Google Analytics para medir visitas.</p>
   </div>
 </footer>
 
@@ -815,6 +821,167 @@ function scrollToPosition() {
   wrap.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
 }
 
+
+// ─── i18n ─────────────────────────────────────────────────────────────
+let curLang = 'es';
+
+const T = {
+  es: {
+    title:        'Escala <span class="acc">Pentatónica</span>',
+    modeMinor:    'Menor',
+    modeMajor:    'Mayor',
+    keyLabel:     'Tonalidad',
+    posAll:       'Todas',
+    posN:         i => 'Pos. ' + i,
+    escuchar:     'Escuchar',
+    detener:      'Detener',
+    cargando:     'Cargando…',
+    noteScale:    'Nota de la escala',
+    fundamental:  'Fundamental',
+    formulaLabel: 'Fórmula',
+    notesLabel:   'Notas',
+    posLabel:     'Posiciones',
+    posVal:       '5 posiciones',
+    digLabel:     'Digitación mano izquierda',
+    overlayNotes: 'Notas',
+    overlayInter: 'Intervalos',
+    overlayFing:  'Digitación',
+    donateMsg:    '¿Te ha servido esta herramienta?<br>Puedes apoyar este proyecto con una donación.',
+    footerHeart:  'Hecho con ♥ por',
+    footerTool:   'Herramienta para alumnos',
+    footerGA:     'Este sitio usa Google Analytics para medir visitas.',
+    scrollHint:   '← desliza para ver el diapasón completo →',
+    fret:         'Traste',
+    outOfRange:   'Fuera de rango',
+    desc: [
+      'El patrón más utilizado, anclado a la fundamental. La fundamental aparece en cuerdas 6, 4 y 1 formando un triángulo — úsalo como brújula siempre que te pierdas.',
+      'Empieza en el ♭3 de la escala. Comparte las notas altas de la pos. 1: practica deslizando de pos. 1 a pos. 2 para aprender a conectarlas sin saltos.',
+      'Empieza en el 4º grado. La fundamental no está en la cuerda 6, búscala en cuerdas 5 y 2. Practica combinando pos. 2 y 3: sube en una posición y baja en la siguiente — así desarrollas fluidez en el mástil.',
+      'Empieza en el 5º grado. Esta posición recuerda un poco a la 1era, por lo que es fácil confundirlas. La pos. 4 es muy utilizada en el blues y en el rock.',
+      'Empieza en el ♭7. Cierra el ciclo: sus notas altas enlazan de vuelta con la pos. 1 una octava arriba. La fundamental aparece en cuerdas 6, 3 y 1 — igual que pos. 1, pero desplazada.'
+    ],
+    descAll: 'Las 5 posiciones se encadenan sin huecos y cubren el mástil completo.',
+    seo: {
+      h1: '¿Qué es la escala pentatónica?',
+      p1: 'La <strong>escala pentatónica</strong> es una de las escalas más importantes y utilizadas en la guitarra. Como su nombre indica, está formada por <strong>5 notas</strong> (del griego <em>penta</em>, cinco), lo que la hace más fácil de aprender y de aplicar que las escalas diatónicas de 7 notas. Es la escala base del blues, el rock, el pop y muchos otros estilos, y es la primera escala que aprende la mayoría de guitarristas cuando comienzan a improvisar.',
+      p2: 'Existen dos tipos principales: la <strong>escala pentatónica menor</strong> y la <strong>escala pentatónica mayor</strong>. Ambas comparten exactamente las mismas notas — lo que cambia es la posición de la fundamental, es decir, la nota desde la que se construye la escala. Por eso se dice que son escalas relativas entre sí.',
+      h2min: 'Escala pentatónica menor',
+      pmin: 'La <strong>pentatónica menor</strong> tiene una sonoridad oscura y expresiva, ideal para el blues, el rock y la improvisación sobre progresiones menores. Su fórmula interválica es <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. En La menor (Am), las notas son: <strong>La, Do, Re, Mi, Sol</strong>. Es la escala favorita de guitarristas como Jimi Hendrix, Eric Clapton, Carlos Santana y David Gilmour.',
+      h2maj: 'Escala pentatónica mayor',
+      pmaj: 'La <strong>pentatónica mayor</strong> tiene un sonido más brillante y optimista, muy usado en country, pop y rock melódico. Su fórmula es <strong>1 — 2 — 3 — 5 — 6</strong>. En Do mayor, las notas son: <strong>Do, Re, Mi, Sol, La</strong>. Guitarristas como Chuck Berry y Keith Richards la utilizan constantemente en sus solos.',
+      h3: 'Las 5 posiciones de la escala pentatónica en el mástil',
+      p3: 'La escala pentatónica se organiza en <strong>5 posiciones o cajas</strong> que cubren el mástil completo de la guitarra. Cada posición empieza desde una nota distinta de la escala, utiliza 2 notas por cuerda y se puede conectar con la siguiente, formando un sistema continuo por todo el diapasón. Aprender las 5 posiciones te da libertad total para improvisar en cualquier zona del mástil.',
+      h4: 'Cómo practicar la escala pentatónica',
+      p4: 'El método más eficaz es aprender una posición a la vez. Empieza por la posición 1, memorízala completamente y practícala despacio antes de aumentar la velocidad. Una vez la tengas interiorizada, incorpora la posición 2 y practica la transición entre ambas. Así con cada posición hasta dominar el mástil completo.',
+      p5: 'Para sacar el máximo partido a la escala pentatónica, practica siempre sobre una base musical — una progresión de blues, un backing track de rock o una progresión de acordes de tu canción favorita. Tocar la escala sobre música real es la única forma de desarrollar el oído y aprender a frasear con libertad.',
+      h5: 'Herramienta interactiva para guitarristas',
+      p6: 'Este diagrama interactivo ha sido creado por <strong>Luisga Martínez</strong>, guitarrista y educador musical, como recurso gratuito para guitarristas de todos los niveles. Puedes seleccionar cualquier tonalidad, alternar entre pentatónica mayor y menor, explorar las 5 posiciones, ver las notas, los intervalos y la digitación de cada posición, y escuchar cómo suena cada nota al pasar el cursor sobre ella.',
+    }
+  },
+  en: {
+    title:        'Pentatonic <span class="acc">Scale</span>',
+    modeMinor:    'Minor',
+    modeMajor:    'Major',
+    keyLabel:     'Key',
+    posAll:       'All',
+    posN:         i => 'Pos. ' + i,
+    escuchar:     'Listen',
+    detener:      'Stop',
+    cargando:     'Loading…',
+    noteScale:    'Scale note',
+    fundamental:  'Root note',
+    formulaLabel: 'Formula',
+    notesLabel:   'Notes',
+    posLabel:     'Positions',
+    posVal:       '5 positions',
+    digLabel:     'Left hand fingering',
+    overlayNotes: 'Notes',
+    overlayInter: 'Intervals',
+    overlayFing:  'Fingering',
+    donateMsg:    'Did you find this tool useful?<br>You can support this project with a donation.',
+    footerHeart:  'Made with ♥ by',
+    footerTool:   'Tool for students',
+    footerGA:     'This site uses Google Analytics to measure visits.',
+    scrollHint:   '← swipe to see the full fretboard →',
+    fret:         'Fret',
+    outOfRange:   'Out of range',
+    desc: [
+      'The most commonly used pattern, anchored to the root note. The root appears on strings 6, 4 and 1 forming a triangle — use it as a compass whenever you get lost.',
+      'Starts on the ♭3 of the scale. Shares the upper notes of pos. 1: practice sliding from pos. 1 to pos. 2 to learn how to connect them smoothly.',
+      'Starts on the 4th degree. The root is not on string 6 — look for it on strings 5 and 2. Practice combining pos. 2 and 3: go up in one position and come back down in the next — this builds fretboard fluency.',
+      'Starts on the 5th degree. This position looks similar to pos. 1, making them easy to confuse. Pos. 4 is widely used in blues and rock.',
+      'Starts on the ♭7. Closes the cycle: its upper notes link back to pos. 1 an octave higher. The root appears on strings 6, 3 and 1 — just like pos. 1, but shifted.'
+    ],
+    descAll: 'All 5 positions link together seamlessly and cover the entire fretboard.',
+    seo: {
+      h1: 'What is the pentatonic scale?',
+      p1: 'The <strong>pentatonic scale</strong> is one of the most important and widely used scales in guitar. As the name suggests, it consists of <strong>5 notes</strong> (from the Greek <em>penta</em>, five), making it easier to learn and apply than 7-note diatonic scales. It is the foundation of blues, rock, pop and many other styles, and is the first scale most guitarists learn when they start improvising.',
+      p2: 'There are two main types: the <strong>minor pentatonic scale</strong> and the <strong>major pentatonic scale</strong>. Both share exactly the same notes — what changes is the position of the root note, i.e. the note from which the scale is built. That is why they are said to be relative scales.',
+      h2min: 'Minor pentatonic scale',
+      pmin: 'The <strong>minor pentatonic</strong> has a dark, expressive sound, ideal for blues, rock and improvisation over minor progressions. Its interval formula is <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. In A minor (Am), the notes are: <strong>A, C, D, E, G</strong>. It is the favourite scale of guitarists like Jimi Hendrix, Eric Clapton, Carlos Santana and David Gilmour.',
+      h2maj: 'Major pentatonic scale',
+      pmaj: 'The <strong>major pentatonic</strong> has a brighter, more optimistic sound, widely used in country, pop and melodic rock. Its formula is <strong>1 — 2 — 3 — 5 — 6</strong>. In C major, the notes are: <strong>C, D, E, G, A</strong>. Guitarists like Chuck Berry and Keith Richards use it constantly in their solos.',
+      h3: 'The 5 positions of the pentatonic scale on the fretboard',
+      p3: 'The pentatonic scale is organised into <strong>5 positions or boxes</strong> that cover the entire guitar neck. Each position starts on a different note of the scale, uses 2 notes per string and connects to the next one, forming a continuous system across the fretboard. Learning all 5 positions gives you complete freedom to improvise anywhere on the neck.',
+      h4: 'How to practise the pentatonic scale',
+      p4: 'The most effective method is to learn one position at a time. Start with position 1, memorise it completely and practise it slowly before increasing speed. Once you have it internalised, add position 2 and practise the transition between them. Repeat this process until you have mastered the whole fretboard.',
+      p5: 'To get the most out of the pentatonic scale, always practise over a musical backing — a blues progression, a rock backing track or a chord progression from your favourite song. Playing the scale over real music is the only way to develop your ear and learn to phrase freely.',
+      h5: 'Interactive tool for guitarists',
+      p6: 'This interactive diagram was created by <strong>Luisga Martínez</strong>, guitarist and music educator, as a free resource for guitarists of all levels. You can select any key, switch between major and minor pentatonic, explore all 5 positions, view the notes, intervals and fingering for each position, and hear each note by hovering over it.',
+    }
+  }
+};
+
+function t(key) { return T[curLang][key]; }
+
+function setLang(lang) {
+  curLang = lang;
+  // Update lang buttons
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.className = 'lang-btn' + (b.textContent.trim().toLowerCase() === lang ? ' on' : '');
+  });
+  // Update static elements
+  document.querySelector('h1').innerHTML = t('title');
+  document.getElementById('mbtn-minor').textContent = t('modeMinor');
+  document.getElementById('mbtn-major').textContent = t('modeMajor');
+  document.querySelector('.ks-lbl').textContent = t('keyLabel');
+  document.getElementById('ldot-scale-label').textContent = t('noteScale');
+  document.getElementById('ldot-fund-label').textContent = t('fundamental');
+  document.querySelector('.scroll-hint').textContent = t('scrollHint');
+  document.getElementById('info-formula-label').textContent = t('formulaLabel');
+  document.getElementById('info-notes-label').textContent = t('notesLabel');
+  document.getElementById('info-pos-label').textContent = t('posLabel');
+  document.getElementById('info-pos-val').textContent = t('posVal');
+  document.getElementById('info-dig-label').textContent = t('digLabel');
+  document.getElementById('obtn-notes').querySelector('span:last-child').textContent = t('overlayNotes');
+  document.getElementById('obtn-intervals').querySelector('span:last-child').textContent = t('overlayInter');
+  document.getElementById('obtn-fingering').querySelector('span:last-child').textContent = t('overlayFing');
+  document.getElementById('donate-msg').innerHTML = t('donateMsg');
+  document.getElementById('footer-heart-text').textContent = t('footerHeart');
+  document.getElementById('footer-tool').textContent = t('footerTool');
+  document.getElementById('footer-ga').textContent = t('footerGA');
+  // Update play button if not playing
+  if (!isPlaying) {
+    document.getElementById('play-label').textContent = t('escuchar');
+  }
+  // Update SEO section
+  document.getElementById('seo-h1').textContent = t('seo').h1;
+  document.getElementById('seo-p1').innerHTML = t('seo').p1;
+  document.getElementById('seo-p2').innerHTML = t('seo').p2;
+  document.getElementById('seo-h2min').textContent = t('seo').h2min;
+  document.getElementById('seo-pmin').innerHTML = t('seo').pmin;
+  document.getElementById('seo-h2maj').textContent = t('seo').h2maj;
+  document.getElementById('seo-pmaj').innerHTML = t('seo').pmaj;
+  document.getElementById('seo-h3').textContent = t('seo').h3;
+  document.getElementById('seo-p3').innerHTML = t('seo').p3;
+  document.getElementById('seo-h4').textContent = t('seo').h4;
+  document.getElementById('seo-p4').innerHTML = t('seo').p4;
+  document.getElementById('seo-p5').innerHTML = t('seo').p5;
+  document.getElementById('seo-h5').textContent = t('seo').h5;
+  document.getElementById('seo-p6').innerHTML = t('seo').p6;
+  renderUI();
+}
+
 function renderUI() {
   const key = activeKeys()[curKey];
   const off = patternOff();
@@ -831,6 +998,8 @@ function renderUI() {
 
   // Mode buttons
   document.getElementById('mbtn-minor').className = 'mbtn' + (curMode==='minor'?' on':'');
+  document.getElementById('mbtn-minor').textContent = T[curLang].modeMinor;
+  document.getElementById('mbtn-major').textContent = T[curLang].modeMajor;
   document.getElementById('mbtn-major').className = 'mbtn' + (curMode==='major'?' on':'');
 
   // Key buttons
@@ -857,7 +1026,7 @@ function renderUI() {
   } else {
     const t = shiftPos(BASE[curPos-1], off);
     const r = t.notes.length ? fretRange(t.notes) : null;
-    document.getElementById('pdesc').textContent = r ? `Traste ${r.min}–${r.max}` : '';
+    document.getElementById('pdesc').textContent = r ? `${T[curLang].fret} ${r.min}–${r.max}` : '';
   }
 
   // Legend dot
@@ -867,7 +1036,7 @@ function renderUI() {
   document.getElementById('rlist').innerHTML = BASE.map(p => {
     const t = shiftPos(p, off);
     const r = t.notes.length ? fretRange(t.notes) : null;
-    const rstr = r ? `Traste ${r.min}–${r.max}` : 'Fuera de rango';
+    const rstr = r ? `${T[curLang].fret} ${r.min}–${r.max}` : T[curLang].outOfRange;
     return `<div class="ritem" onclick="selPos(${p.id})"${
       curPos===p.id ? ` style="border-color:${p.col}55"` : ''
     }>
@@ -1156,11 +1325,11 @@ function updatePlayBtn() {
   if (isPlaying) {
     btn.classList.add('playing');
     icon.innerHTML = '<rect x="2" y="1" width="4" height="14"/><rect x="10" y="1" width="4" height="14"/>';
-    lbl.textContent = 'Detener';
+    lbl.textContent = T[curLang].detener;
   } else {
     btn.classList.remove('playing');
     icon.innerHTML = '<polygon points="3,1 14,8 3,15"/>';
-    lbl.textContent = 'Escuchar';
+    lbl.textContent = T[curLang].escuchar;
   }
 }
 
