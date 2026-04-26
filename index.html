@@ -46,7 +46,9 @@ header{
   background:#fff;
   border-bottom:1px solid #ece9e3;
   padding:3rem 2rem 2.5rem;
+  padding-top:4.5rem;
   text-align:center;
+  position:relative;
 }
 .brand{
   font-family:'Barlow Condensed',sans-serif;
@@ -362,10 +364,9 @@ footer{
 
 /* ─── LANGUAGE TOGGLE ─────────────────── */
 .lang-row{
-  position:fixed;
+  position:absolute;
   top:16px;
   right:20px;
-  z-index:9999;
 }
 .lang-toggle{
   display:inline-flex;
@@ -397,13 +398,13 @@ footer{
 </head>
 <body>
 
-<div class="lang-row">
-  <div class="lang-toggle">
-    <button class="lang-btn on" onclick="setLang('es')">ES</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-  </div>
-</div>
 <header>
+  <div class="lang-row">
+    <div class="lang-toggle">
+      <button class="lang-btn on" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
   <p class="brand">Luisga <span>Martínez</span></p>
   <h1>Escala <span class="acc">Pentatónica</span></h1>
   <div class="mode-row" id="mode-row">
@@ -834,7 +835,7 @@ function draw() {
   scrollToPosition();
 }
 
-// Auto-scroll fretboard so active position is centred on mobile
+// Auto-scroll fretboard so active position is centerd on mobile
 function scrollToPosition() {
   const wrap = document.querySelector('.fbwrap');
   if (!wrap) return;
@@ -952,14 +953,14 @@ const T = {
       p1: 'The <strong>pentatonic scale</strong> is one of the most important and widely used scales in guitar. As the name suggests, it consists of <strong>5 notes</strong> (from the Greek <em>penta</em>, five), making it easier to learn and apply than 7-note diatonic scales. It is the foundation of blues, rock, pop and many other styles, and is the first scale most guitarists learn when they start improvising.',
       p2: 'There are two main types: the <strong>minor pentatonic scale</strong> and the <strong>major pentatonic scale</strong>. Both share exactly the same notes — what changes is the position of the root note, i.e. the note from which the scale is built. That is why they are said to be relative scales.',
       h2min: 'Minor pentatonic scale',
-      pmin: 'The <strong>minor pentatonic</strong> has a dark, expressive sound, ideal for blues, rock and improvisation over minor progressions. Its interval formula is <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. In A minor (Am), the notes are: <strong>A, C, D, E, G</strong>. It is the favourite scale of guitarists like Jimi Hendrix, Eric Clapton, Carlos Santana and David Gilmour.',
+      pmin: 'The <strong>minor pentatonic</strong> has a dark, expressive sound, ideal for blues, rock and improvisation over minor progressions. Its interval formula is <strong>1 — ♭3 — 4 — 5 — ♭7</strong>. In A minor (Am), the notes are: <strong>A, C, D, E, G</strong>. It is the favorite scale of guitarists like Jimi Hendrix, Eric Clapton, Carlos Santana and David Gilmour.',
       h2maj: 'Major pentatonic scale',
       pmaj: 'The <strong>major pentatonic</strong> has a brighter, more optimistic sound, widely used in country, pop and melodic rock. Its formula is <strong>1 — 2 — 3 — 5 — 6</strong>. In C major, the notes are: <strong>C, D, E, G, A</strong>. Guitarists like Chuck Berry and Keith Richards use it constantly in their solos.',
       h3: 'The 5 positions of the pentatonic scale on the fretboard',
-      p3: 'The pentatonic scale is organised into <strong>5 positions or boxes</strong> that cover the entire guitar neck. Each position starts on a different note of the scale, uses 2 notes per string and connects to the next one, forming a continuous system across the fretboard. Learning all 5 positions gives you complete freedom to improvise anywhere on the neck.',
-      h4: 'How to practise the pentatonic scale',
-      p4: 'The most effective method is to learn one position at a time. Start with position 1, memorise it completely and practise it slowly before increasing speed. Once you have it internalised, add position 2 and practise the transition between them. Repeat this process until you have mastered the whole fretboard.',
-      p5: 'To get the most out of the pentatonic scale, always practise over a musical backing — a blues progression, a rock backing track or a chord progression from your favourite song. Playing the scale over real music is the only way to develop your ear and learn to phrase freely.',
+      p3: 'The pentatonic scale is organized into <strong>5 positions or boxes</strong> that cover the entire guitar neck. Each position starts on a different note of the scale, uses 2 notes per string and connects to the next one, forming a continuous system across the fretboard. Learning all 5 positions gives you complete freedom to improvise anywhere on the neck.',
+      h4: 'How to practice the pentatonic scale',
+      p4: 'The most effective method is to learn one position at a time. Start with position 1, memorise it completely and practice it slowly before increasing speed. Once you have it internalized, add position 2 and practice the transition between them. Repeat this process until you have mastered the whole fretboard.',
+      p5: 'To get the most out of the pentatonic scale, always practice over a musical backing — a blues progression, a rock backing track or a chord progression from your favorite song. Playing the scale over real music is the only way to develop your ear and learn to phrase freely.',
       h5: 'Interactive tool for guitarists',
       p6: 'This interactive diagram was created by <strong>Luisga Martínez</strong>, guitarist and music educator, as a free resource for guitarists of all levels. You can select any key, switch between major and minor pentatonic, explore all 5 positions, view the notes, intervals and fingering for each position, and hear each note by hovering over it.',
     }
@@ -974,46 +975,53 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.className = 'lang-btn' + (b.textContent.trim().toLowerCase() === lang ? ' on' : '');
   });
-  // Update static elements
-  document.querySelector('h1').innerHTML = t('title');
-  document.getElementById('mbtn-minor').textContent = t('modeMinor');
-  document.getElementById('mbtn-major').textContent = t('modeMajor');
-  document.querySelector('.ks-lbl').textContent = t('keyLabel');
-  document.getElementById('ldot-scale-label').textContent = t('noteScale');
-  document.getElementById('ldot-fund-label').textContent = t('fundamental');
-  document.querySelector('.scroll-hint').textContent = t('scrollHint');
-  document.getElementById('info-formula-label').textContent = t('formulaLabel');
-  document.getElementById('info-notes-label').textContent = t('notesLabel');
-  document.getElementById('info-pos-label').textContent = t('posLabel');
-  document.getElementById('info-pos-val').textContent = t('posVal');
-  document.getElementById('info-dig-label').textContent = t('digLabel');
-  document.getElementById('obtn-notes').querySelector('span:last-child').textContent = t('overlayNotes');
-  document.getElementById('obtn-intervals').querySelector('span:last-child').textContent = t('overlayInter');
-  document.getElementById('obtn-fingering').querySelector('span:last-child').textContent = t('overlayFing');
-  document.getElementById('donate-msg').innerHTML = t('donateMsg');
-  document.getElementById('footer-heart-text').textContent = t('footerHeart');
-  document.getElementById('footer-tool').textContent = t('footerTool');
-  document.getElementById('footer-ga').textContent = t('footerGA');
-  // Update play button if not playing
-  if (!isPlaying) {
-    document.getElementById('play-label').textContent = t('escuchar');
-  }
-  // Update SEO section
-  document.getElementById('seo-h1').textContent = t('seo').h1;
-  document.getElementById('seo-p1').innerHTML = t('seo').p1;
-  document.getElementById('seo-p2').innerHTML = t('seo').p2;
-  document.getElementById('seo-h2min').textContent = t('seo').h2min;
-  document.getElementById('seo-pmin').innerHTML = t('seo').pmin;
-  document.getElementById('seo-h2maj').textContent = t('seo').h2maj;
-  document.getElementById('seo-pmaj').innerHTML = t('seo').pmaj;
-  document.getElementById('seo-h3').textContent = t('seo').h3;
-  document.getElementById('seo-p3').innerHTML = t('seo').p3;
-  document.getElementById('seo-h4').textContent = t('seo').h4;
-  document.getElementById('seo-p4').innerHTML = t('seo').p4;
-  document.getElementById('seo-p5').innerHTML = t('seo').p5;
-  document.getElementById('seo-h5').textContent = t('seo').h5;
-  document.getElementById('seo-p6').innerHTML = t('seo').p6;
-  renderUI();
+
+  // Helper: update only if element exists
+  const el  = id => document.getElementById(id);
+  const qs  = sel => document.querySelector(sel);
+  const set = (id, val, html) => { const e = el(id); if (e) html ? e.innerHTML = val : e.textContent = val; };
+  const qss = (sel, val) => { const e = qs(sel); if (e) e.textContent = val; };
+
+  // Static elements
+  const h1 = qs('h1'); if (h1) h1.innerHTML = t('title');
+  set('mbtn-minor', t('modeMinor'));
+  set('mbtn-major', t('modeMajor'));
+  qss('.ks-lbl', t('keyLabel'));
+  set('ldot-scale-label', t('noteScale'));
+  set('ldot-fund-label',  t('fundamental'));
+  qss('.scroll-hint', t('scrollHint'));
+  set('info-formula-label', t('formulaLabel'));
+  set('info-notes-label',   t('notesLabel'));
+  set('info-pos-label',     t('posLabel'));
+  set('info-pos-val',       t('posVal'));
+  set('info-dig-label',     t('digLabel'));
+  const on = el('obtn-notes');    if (on)  { const s = on.querySelector('span:last-child');   if (s) s.textContent = t('overlayNotes'); }
+  const oi = el('obtn-intervals');if (oi)  { const s = oi.querySelector('span:last-child');   if (s) s.textContent = t('overlayInter'); }
+  const of = el('obtn-fingering');if (of)  { const s = of.querySelector('span:last-child');   if (s) s.textContent = t('overlayFing');  }
+  set('donate-msg',        t('donateMsg'),   true);
+  set('footer-heart-text', t('footerHeart'));
+  set('footer-tool',       t('footerTool'));
+  set('footer-ga',         t('footerGA'));
+  if (!isPlaying) set('play-label', t('escuchar'));
+
+  // SEO section
+  const seo = t('seo');
+  set('seo-h1',   seo.h1);
+  set('seo-p1',   seo.p1,   true);
+  set('seo-p2',   seo.p2,   true);
+  set('seo-h2min',seo.h2min);
+  set('seo-pmin', seo.pmin, true);
+  set('seo-h2maj',seo.h2maj);
+  set('seo-pmaj', seo.pmaj, true);
+  set('seo-h3',   seo.h3);
+  set('seo-p3',   seo.p3,   true);
+  set('seo-h4',   seo.h4);
+  set('seo-p4',   seo.p4,   true);
+  set('seo-p5',   seo.p5,   true);
+  set('seo-h5',   seo.h5);
+  set('seo-p6',   seo.p6,   true);
+
+  renderUI(); // always runs now
 }
 
 function renderUI() {
@@ -1051,7 +1059,7 @@ function renderUI() {
       const a = curPos === p.id;
       return `<button class="pbtn${a?' on':''}" onclick="selPos(${p.id})"${
         a ? ` style="border-color:${p.col};color:${p.col}"` : ''
-      }>${p.id===0 ? 'Todas' : 'Pos. '+p.id}</button>`;
+      }>${p.id===0 ? T[curLang].posAll : T[curLang].posN(p.id)}</button>`;
     }).join('');
 
   // Description — fret range only, no text description
